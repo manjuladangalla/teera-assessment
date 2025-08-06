@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from core.models import Company, Customer, Invoice
 from reconciliation.models import (
     BankTransaction, ReconciliationLog, FileUploadStatus,
-    MatchingRule, ReconciliationSummary
+    MatchingRule, ReconciliationSummary, MLModelVersion
 )
 
 
@@ -169,4 +169,37 @@ class FileUploadSerializer(serializers.Serializer):
         if value.size > 50 * 1024 * 1024:
             raise serializers.ValidationError("File size cannot exceed 50MB")
         
+        return value
+
+
+class MLModelVersionSerializer(serializers.ModelSerializer):
+    """Serializer for ML model versions."""
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    
+    class Meta:
+        model = MLModelVersion
+        fields = [
+            'id', 'company', 'company_name', 'version', 'model_path',
+            'accuracy_score', 'precision_score', 'recall_score', 'f1_score',
+            'training_data_count', 'is_active', 'created_at', 'training_metadata'
+        ]
+        read_only_fields = ['id', 'created_at']
+
+
+class BatchReconciliationSerializer(serializers.Serializer):
+    """Serializer for batch operations."""
+    transaction_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        allow_empty=False
+    )
+    operation = serializers.ChoiceField(choices=[
+        ('mark_ignored', 'Mark as Ignored'),
+        ('mark_disputed', 'Mark as Disputed'),
+        ('trigger_ml_matching', 'Trigger ML Matching'),
+    ])
+    notes = serializers.CharField(max_length=500, required=False)
+    
+    def validate_transaction_ids(self, value):
+        if len(value) > 100:
+            raise serializers.ValidationError("Cannot process more than 100 transactions at once")
         return value

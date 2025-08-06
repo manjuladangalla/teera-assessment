@@ -1,0 +1,49 @@
+transaction_date,description,amount,reference_number,bank_reference,transaction_type,balance
+2025-06-18,Transfer from StartUp Ventures,1309.44,REF-START001-007,BK-2025-0618-007,credit,129785.39
+2025-06-23,Wire from Enterprise Solu - REF-ENT001-003,12533.98,REF-ENT001-003,BK-2025-0623-003,credit,121050.9
+2025-06-24,ACH Credit - StartUp Ventures,3661.34,REF-START001-005,BK-2025-0624-005,credit,128475.95
+2025-06-25,ACH Credit - StartUp Ventures,2749.5499999999997,REF-START001-010,BK-2025-0625-010,credit,162943.46
+2025-06-27,ACH Credit - Digital Marketing Co,2633.66,,BK-2025-0627-002,credit,108516.92
+2025-06-28,ACH Credit - Retail Chain Ltd,3763.71,REF-RET001-004,BK-2025-0628-004,credit,124814.61
+2025-07-01,Monthly Service Fee,-25.0,BANK-FEE-001,BK-2025-0701-FEE,debit,550516.1000000001
+2025-07-05,Enterprise Solutions - Invoice Payment,5883.26,REF-ENT001-001,BK-2025-0705-001,credit,105883.26
+2025-07-06,ACH Credit - Tech Solutions Ltd,7943.110000000001,REF-TECH001-020,BK-2025-0706-020,credit,264100.71
+2025-07-11,Payment from Tech Solutions Ltd - Annual Support Contr,2425.1000000000004,REF-TECH001-012,BK-2025-0711-012,credit,184053.29
+2025-07-12,ACH Credit - Retail Chain Ltd,8290.1,REF-RET001-017,BK-2025-0712-017,credit,217369.58
+2025-07-12,Wire from Acme Corporatio - REF-ACME001-018,16872.93,REF-ACME001-018,BK-2025-0712-018,credit,234242.51
+2025-07-15,Interest Payment,125.5,INT-PAYMENT-001,BK-2025-0715-INT,credit,550616.6000000001
+2025-07-16,Payment from Digital Marketing Co - Web Development Serv,2978.64,REF-DIGI001-013,BK-2025-0716-013,credit,187031.93
+2025-07-19,Manufacturing Inc - Invoice Payment,15111.59,REF-MFG001-009,BK-2025-0719-009,credit,160193.91
+2025-07-22,Manufacturing Inc - Invoice Payment,15296.93,REF-MFG001-008,BK-2025-0722-008,credit,145082.32
+2025-07-26,Payment from Retail Chain Ltd - CRM Integration Serv,8402.57,REF-RET001-026,BK-2025-0726-026,credit,337980.98
+2025-07-29,Transfer from Manufacturing Inc,18684.73,REF-MFG001-011,BK-2025-0729-011,credit,181628.19
+2025-07-29,Payment from Enterprise Solutions - Cloud Migration Serv,5992.52,REF-ENT001-014,BK-2025-0729-014,credit,193024.45
+2025-07-31,Transfer from Manufacturing Inc,21915.089999999997,,BK-2025-0731-019,credit,256157.6
+2025-08-01,Transfer from Global Enterprises,17420.26,REF-GLOB001-024,BK-2025-0801-024,credit,329578.41
+2025-08-01,Monthly Service Fee,-25.0,BANK-FEE-002,BK-2025-0801-FEE,debit,550491.1000000001
+2025-08-03,Wire from Acme Corporatio - REF-ACME001-027,14291.54,REF-ACME001-027,BK-2025-0803-027,credit,352272.52
+2025-08-03,Payment from Digital Marketing Co - Patient Management S,5622.4,REF-DIGI001-030,BK-2025-0803-030,credit,391313.77
+2025-08-03,Tech Solutions Ltd - Invoice Payment,4343.1900000000005,REF-TECH001-032,BK-2025-0803-032,credit,407021.84
+2025-08-04,Transfer from Global Enterprises,16055.029999999999,REF-GLOB001-015,BK-2025-0804-015,credit,209079.48
+2025-08-05,Unknown Deposit - Investigation Required,750.0,UNKNOWN-001,BK-2025-0805-UNK,credit,551366.6000000001
+2025-08-06,Payment from Enterprise Solutions - SEO Optimization Pac,11364.880000000001,REF-ENT001-031,BK-2025-0806-031,credit,402678.65
+2025-08-10,Wire Transfer Fee,-35.0,WIRE-FEE-001,BK-2025-0810-WIRE,debit,551331.6000000001
+2025-08-11,Payment from Manufacturing Inc - Database Optimizatio,22957.68,REF-MFG001-021,BK-2025-0811-021,credit,287058.39
+2025-08-11,Manufacturing Inc - Invoice Payment,25099.760000000002,,BK-2025-0811-022,credit,312158.15
+2025-08-15,Transfer from Retail Chain Ltd,6158.88,REF-RET001-034,BK-2025-0815-034,credit,429697.58
+2025-08-16,Payment from Global Enterprises - Fleet Management Sys,6708.2699999999995,,BK-2025-0816-029,credit,385691.37
+2025-08-17,Transfer from Acme Corporation,16516.86,REF-ACME001-033,BK-2025-0817-033,credit,423538.7
+2025-08-18,Wire from Tech Solutions  - REF-TECH001-040,6916.32,REF-TECH001-040,BK-2025-0818-040,credit,490512.37
+2025-08-19,Wire from StartUp Venture - REF-START001-037,2463.5099999999998,REF-START001-037,BK-2025-0819-037,credit,460647.96
+2025-08-19,Transfer from Digital Marketing Co,4653.23,,BK-2025-0819-044,credit,495165.6
+2025-08-24,Manufacturing Inc - Invoice Payment,26710.58,REF-MFG001-028,BK-2025-0824-028,credit,378983.1
+2025-08-25,Payment from Global Enterprises - Cloud Migration Serv,28486.87,REF-GLOB001-036,BK-2025-0825-036,credit,458184.45
+2025-08-27,ACH Credit - Digital Marketing Co,4241.889999999999,REF-DIGI001-045,BK-2025-0827-045,credit,499407.49
+2025-08-30,ACH Credit - Global Enterprises,22948.09,REF-GLOB001-038,BK-2025-0830-038,credit,483596.05
+2025-09-02,ACH Credit - Digital Marketing Co,5223.63,,BK-2025-0902-049,credit,524649.11
+2025-09-05,StartUp Ventures - Invoice Payment,1633.15,REF-START001-052,BK-2025-0905-052,credit,550541.1
+2025-09-09,Transfer from Digital Marketing Co,2358.11,,BK-2025-0909-047,credit,505577.67
+2025-09-12,Payment from Retail Chain Ltd - Mobile App Developme,3812.07,REF-RET001-046,BK-2025-0912-046,credit,503219.56
+2025-09-13,ACH Credit - Digital Marketing Co,4366.0,REF-DIGI001-051,BK-2025-0913-051,credit,548907.95
+2025-09-23,ACH Credit - Manufacturing Inc,13847.81,REF-MFG001-048,BK-2025-0923-048,credit,519425.48
+2025-09-27,Wire from Manufacturing I - REF-MFG001-050,19892.84,REF-MFG001-050,BK-2025-0927-050,credit,544541.95

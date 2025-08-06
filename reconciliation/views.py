@@ -209,6 +209,13 @@ class MatchingRuleViewSet(viewsets.ModelViewSet):
     ordering = ['priority']
     
     def get_queryset(self):
+        # Handle schema generation gracefully
+        if getattr(self, 'swagger_fake_view', False):
+            return MatchingRule.objects.none()
+            
+        if not self.request.user.is_authenticated:
+            return MatchingRule.objects.none()
+            
         company = get_user_company(self.request.user)
         return MatchingRule.objects.filter(company=company)
     
@@ -227,6 +234,13 @@ class ReconciliationSummaryViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['-period_start']
     
     def get_queryset(self):
+        # Handle schema generation gracefully
+        if getattr(self, 'swagger_fake_view', False):
+            return ReconciliationSummary.objects.none()
+            
+        if not self.request.user.is_authenticated:
+            return ReconciliationSummary.objects.none()
+            
         company = get_user_company(self.request.user)
         return ReconciliationSummary.objects.filter(company=company)
     

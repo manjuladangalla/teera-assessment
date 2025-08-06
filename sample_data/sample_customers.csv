@@ -1,0 +1,9 @@
+customer_code,name,email,phone,address,is_active
+ACME001,Acme Corporation,billing@acme.com,+1-555-0101,"123 Business Ave, New York, NY 10001",True
+TECH001,Tech Solutions Ltd,accounts@techsol.com,+1-555-0102,"456 Technology Blvd, San Francisco, CA 94105",True
+GLOB001,Global Enterprises,finance@global.com,+1-555-0103,"789 Corporate St, Chicago, IL 60601",True
+DIGI001,Digital Marketing Co,pay@digmark.com,+1-555-0104,"321 Digital Way, Austin, TX 78701",True
+MFG001,Manufacturing Inc,ap@mfginc.com,+1-555-0105,"654 Industrial Rd, Detroit, MI 48201",True
+START001,StartUp Ventures,billing@startup.com,+1-555-0106,"987 Innovation Dr, Seattle, WA 98101",True
+ENT001,Enterprise Solutions,accounts@entsol.com,+1-555-0107,"147 Enterprise Plaza, Boston, MA 02101",True
+RET001,Retail Chain Ltd,finance@retail.com,+1-555-0108,"258 Retail Blvd, Miami, FL 33101",True

@@ -49,6 +49,95 @@ A sophisticated Django-based reconciliation system that uses machine learning to
 - **API Documentation**: Swagger/OpenAPI with drf-spectacular
 - **Admin Interface**: Django Admin (enhanced)
 
+## ⚡ Quick Start Testing
+
+### 5-Minute Setup
+
+```bash
+# 1. Clone and setup
+git clone <repository-url>
+cd teera-assessment
+python -m venv venv
+source venv/bin/activate
+
+# 2. Install and migrate
+pip install -r requirements.txt
+python manage.py migrate
+
+# 3. Create admin user
+python manage.py createsuperuser
+
+# 4. Load sample data
+python manage.py load_sample_data
+
+# 5. Start server
+python manage.py runserver
+```
+
+### Quick API Test
+
+```bash
+# Get JWT token (replace with your credentials)
+curl -X POST http://localhost:8000/api/auth/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "your_password"}'
+
+# Test with token (replace YOUR_TOKEN)
+export TOKEN="your_access_token_here"
+curl -X GET http://localhost:8000/api/v1/bank/transactions/ \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Quick Postman Test
+
+1. **Import Collection**: Use the Postman collection below
+2. **Set Environment**: `base_url = http://localhost:8000`
+3. **Authenticate**: Run "Obtain JWT Token" request first
+4. **Test Endpoints**: All other requests will use the token automatically
+
+**Postman Environment Setup:**
+
+```json
+{
+  "name": "Bank Reconciliation Local",
+  "values": [
+    { "key": "base_url", "value": "http://localhost:8000" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" }
+  ]
+}
+```
+
+### One-Command Complete Test
+
+For the quickest way to test everything:
+
+```bash
+# Run the automated test script
+./test_complete_system.sh
+```
+
+This script will:
+
+- ✅ Setup virtual environment
+- ✅ Install dependencies
+- ✅ Run migrations
+- ✅ Load sample data
+- ✅ Start server
+- ✅ Test all API endpoints
+- ✅ Show database statistics
+- ✅ Provide access URLs
+
+### Import Postman Collection
+
+Import the ready-to-use Postman collection:
+
+- **File**: `postman_collection.json` (in project root)
+- **Contains**: 20+ pre-configured API requests
+- **Features**: Automatic token management, tests, environment variables
+
+> 📖 **For detailed testing instructions, see [QUICK_TESTING_GUIDE.md](QUICK_TESTING_GUIDE.md)**
+
 ## 📦 Installation
 
 ### Prerequisites
@@ -297,6 +386,8 @@ After running `create_sample_data`:
 
 ## 🧪 Testing
 
+### Unit Tests
+
 ```bash
 # Run all tests
 python manage.py test
@@ -310,6 +401,469 @@ coverage run --source='.' manage.py test
 coverage report
 coverage html  # Generates htmlcov/index.html
 ```
+
+### Complete System Testing Guide
+
+#### 1. Terminal-Based Testing
+
+**Step 1: Initial Setup**
+
+```bash
+# Clone and setup the project
+git clone <repository-url>
+cd teera-assessment
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Setup database
+python manage.py migrate
+
+# Create superuser
+python manage.py createsuperuser
+# Follow prompts to create admin user
+```
+
+**Step 2: Load Sample Data**
+
+```bash
+# Generate fresh sample data (optional)
+python generate_sample_data.py
+
+# Load sample data into database
+python manage.py load_sample_data
+
+# Verify data loading
+python manage.py shell -c "
+from core.models import Company, User
+from reconciliation.models import BankTransaction, Invoice, Customer
+print(f'Companies: {Company.objects.count()}')
+print(f'Users: {User.objects.count()}')
+print(f'Customers: {Customer.objects.count()}')
+print(f'Invoices: {Invoice.objects.count()}')
+print(f'Bank Transactions: {BankTransaction.objects.count()}')
+"
+```
+
+**Step 3: Start the Development Server**
+
+```bash
+# Terminal 1: Start Django server
+python manage.py runserver
+
+# Terminal 2: Start Celery worker (optional for development)
+celery -A config worker -l info
+
+# Terminal 3: Start Celery beat (optional for scheduled tasks)
+celery -A config beat -l info
+```
+
+**Step 4: Test API Endpoints with curl**
+
+```bash
+# 1. Obtain JWT Token
+curl -X POST http://localhost:8000/api/auth/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your_username", "password": "your_password"}'
+
+# Save the access_token from response
+export TOKEN="your_access_token_here"
+
+# 2. Test Bank Transactions List
+curl -X GET http://localhost:8000/api/v1/bank/transactions/ \
+  -H "Authorization: Bearer $TOKEN"
+
+# 3. Test Unmatched Transactions
+curl -X GET http://localhost:8000/api/v1/bank/unmatched/ \
+  -H "Authorization: Bearer $TOKEN"
+
+# 4. Test File Upload (using sample data)
+curl -X POST http://localhost:8000/api/v1/bank/upload/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@sample_data/sample_bank_transactions.csv" \
+  -F "file_type=bank_statement"
+
+# 5. Test Customer List
+curl -X GET http://localhost:8000/api/v1/bank/customers/ \
+  -H "Authorization: Bearer $TOKEN"
+
+# 6. Test Invoice List
+curl -X GET http://localhost:8000/api/v1/bank/invoices/ \
+  -H "Authorization: Bearer $TOKEN"
+
+# 7. Test Reconciliation Logs
+curl -X GET http://localhost:8000/api/v1/bank/logs/ \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Step 5: Test ML Model Training**
+
+```bash
+# Train ML models for all companies
+python manage.py train_ml_models
+
+# Train model for specific company (if you know the company ID)
+python manage.py train_ml_models --company-id <company-uuid>
+
+# Check model training status
+python manage.py shell -c "
+from reconciliation.models import MLModelVersion
+models = MLModelVersion.objects.all()
+for model in models:
+    print(f'Company: {model.company.name}, Version: {model.version}, Accuracy: {model.accuracy}')
+"
+```
+
+#### 2. Postman Testing Guide
+
+**Step 1: Setup Postman Environment**
+
+Create a new Postman environment with these variables:
+
+- `base_url`: `http://localhost:8000`
+- `access_token`: (will be set after authentication)
+- `refresh_token`: (will be set after authentication)
+
+**Step 2: Authentication Collection**
+
+Create a collection called "Bank Reconciliation API" with these requests:
+
+**2.1 Obtain JWT Token**
+
+```
+Method: POST
+URL: {{base_url}}/api/auth/token/
+Headers:
+  Content-Type: application/json
+Body (raw JSON):
+{
+  "username": "your_username",
+  "password": "your_password"
+}
+
+Tests (JavaScript):
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+if (pm.response.code === 200) {
+    const jsonData = pm.response.json();
+    pm.environment.set("access_token", jsonData.access);
+    pm.environment.set("refresh_token", jsonData.refresh);
+}
+```
+
+**2.2 Refresh Token**
+
+```
+Method: POST
+URL: {{base_url}}/api/auth/token/refresh/
+Headers:
+  Content-Type: application/json
+Body (raw JSON):
+{
+  "refresh": "{{refresh_token}}"
+}
+
+Tests (JavaScript):
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+if (pm.response.code === 200) {
+    const jsonData = pm.response.json();
+    pm.environment.set("access_token", jsonData.access);
+}
+```
+
+**Step 3: API Testing Collection**
+
+**3.1 List Bank Transactions**
+
+```
+Method: GET
+URL: {{base_url}}/api/v1/bank/transactions/
+Headers:
+  Authorization: Bearer {{access_token}}
+
+Tests:
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has transactions", function () {
+    const jsonData = pm.response.json();
+    pm.expect(jsonData).to.have.property('results');
+    pm.expect(jsonData.results).to.be.an('array');
+});
+```
+
+**3.2 List Unmatched Transactions**
+
+```
+Method: GET
+URL: {{base_url}}/api/v1/bank/unmatched/
+Headers:
+  Authorization: Bearer {{access_token}}
+
+Tests:
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+```
+
+**3.3 Upload Bank Statement File**
+
+```
+Method: POST
+URL: {{base_url}}/api/v1/bank/upload/
+Headers:
+  Authorization: Bearer {{access_token}}
+Body (form-data):
+  file: [Select sample_data/sample_bank_transactions.csv]
+  file_type: bank_statement
+
+Tests:
+pm.test("Status code is 201", function () {
+    pm.response.to.have.status(201);
+});
+
+pm.test("Upload response contains task_id", function () {
+    const jsonData = pm.response.json();
+    pm.expect(jsonData).to.have.property('task_id');
+});
+```
+
+**3.4 List Customers**
+
+```
+Method: GET
+URL: {{base_url}}/api/v1/bank/customers/
+Headers:
+  Authorization: Bearer {{access_token}}
+
+Tests:
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has customers", function () {
+    const jsonData = pm.response.json();
+    pm.expect(jsonData).to.have.property('results');
+    pm.expect(jsonData.results).to.be.an('array');
+});
+```
+
+**3.5 List Invoices**
+
+```
+Method: GET
+URL: {{base_url}}/api/v1/bank/invoices/
+Headers:
+  Authorization: Bearer {{access_token}}
+
+Tests:
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has invoices", function () {
+    const jsonData = pm.response.json();
+    pm.expect(jsonData).to.have.property('results');
+    pm.expect(jsonData.results).to.be.an('array');
+});
+```
+
+**3.6 Manual Reconciliation**
+
+```
+Method: POST
+URL: {{base_url}}/api/v1/bank/reconcile/{{transaction_id}}/
+Headers:
+  Authorization: Bearer {{access_token}}
+  Content-Type: application/json
+Body (raw JSON):
+{
+  "invoice_id": "{{invoice_id}}",
+  "confidence_score": 0.95,
+  "notes": "Manual reconciliation via Postman"
+}
+
+Pre-request Script:
+// Get a transaction ID and invoice ID from previous requests
+// You can set these manually or fetch them dynamically
+
+Tests:
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+```
+
+**3.7 Reconciliation Logs**
+
+```
+Method: GET
+URL: {{base_url}}/api/v1/bank/logs/
+Headers:
+  Authorization: Bearer {{access_token}}
+
+Tests:
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+```
+
+**Step 4: Advanced Testing Scenarios**
+
+**4.1 Pagination Testing**
+
+```
+Method: GET
+URL: {{base_url}}/api/v1/bank/transactions/?page=1&page_size=10
+Headers:
+  Authorization: Bearer {{access_token}}
+```
+
+**4.2 Filtering Testing**
+
+```
+Method: GET
+URL: {{base_url}}/api/v1/bank/transactions/?is_matched=false&amount_min=1000
+Headers:
+  Authorization: Bearer {{access_token}}
+```
+
+**4.3 Bulk Upload Testing**
+
+```
+Method: POST
+URL: {{base_url}}/api/v1/bank/upload/
+Headers:
+  Authorization: Bearer {{access_token}}
+Body (form-data):
+  file: [Select sample_data/sample_invoices.csv]
+  file_type: invoice
+```
+
+#### 3. Web Interface Testing
+
+**Step 1: Access Web Interface**
+
+1. Open browser and go to `http://localhost:8000/`
+2. Login with your superuser credentials
+3. Navigate through the dashboard
+
+**Step 2: Test File Upload Interface**
+
+1. Go to `http://localhost:8000/upload/`
+2. Upload `sample_data/sample_bank_transactions.csv`
+3. Monitor the upload progress and processing status
+
+**Step 3: Test Manual Reconciliation**
+
+1. Go to `http://localhost:8000/reconciliation/`
+2. View unmatched transactions
+3. Test manual matching interface
+
+#### 4. API Documentation Testing
+
+**Access Interactive API Documentation:**
+
+- **Swagger UI**: `http://localhost:8000/api/docs/`
+- **ReDoc**: `http://localhost:8000/api/redoc/`
+- **OpenAPI Schema**: `http://localhost:8000/api/schema/`
+
+**Test directly in Swagger UI:**
+
+1. Click "Authorize" button
+2. Enter `Bearer your_access_token`
+3. Test endpoints directly in the interface
+
+#### 5. Performance Testing
+
+**Load Testing with curl (simple)**
+
+```bash
+# Test concurrent requests
+for i in {1..10}; do
+  curl -X GET http://localhost:8000/api/v1/bank/transactions/ \
+    -H "Authorization: Bearer $TOKEN" &
+done
+wait
+
+# Test file upload performance
+time curl -X POST http://localhost:8000/api/v1/bank/upload/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@sample_data/sample_bank_transactions.csv" \
+  -F "file_type=bank_statement"
+```
+
+#### 6. Database State Verification
+
+**Check Data Integrity:**
+
+```bash
+python manage.py shell -c "
+from reconciliation.models import BankTransaction, Invoice, ReconciliationLog
+from django.db.models import Count, Sum
+
+print('=== Database Statistics ===')
+print(f'Total Bank Transactions: {BankTransaction.objects.count()}')
+print(f'Matched Transactions: {BankTransaction.objects.filter(is_matched=True).count()}')
+print(f'Unmatched Transactions: {BankTransaction.objects.filter(is_matched=False).count()}')
+print(f'Total Invoices: {Invoice.objects.count()}')
+print(f'Paid Invoices: {Invoice.objects.filter(status=\"paid\").count()}')
+print(f'Total Reconciliation Logs: {ReconciliationLog.objects.count()}')
+print(f'Total Transaction Amount: {BankTransaction.objects.aggregate(Sum(\"amount\"))}')
+"
+```
+
+#### 7. Troubleshooting Common Issues
+
+**Issue 1: Authentication Failed**
+
+```bash
+# Check if user exists
+python manage.py shell -c "
+from django.contrib.auth import get_user_model
+User = get_user_model()
+print('Available users:')
+for user in User.objects.all():
+    print(f'  - {user.username} (active: {user.is_active})')
+"
+```
+
+**Issue 2: No Data Available**
+
+```bash
+# Reload sample data
+python manage.py load_sample_data
+```
+
+**Issue 3: Server Not Starting**
+
+```bash
+# Check for port conflicts
+lsof -i :8000
+
+# Run with different port
+python manage.py runserver 8001
+```
+
+**Issue 4: File Upload Issues**
+
+```bash
+# Check media directory permissions
+ls -la media/
+chmod 755 media/
+chmod 755 uploads/
+```
+
+This comprehensive testing guide covers all aspects of the bank reconciliation system, from basic setup to advanced API testing with both terminal commands and Postman collections.
 
 ## 📁 File Format Requirements
 
