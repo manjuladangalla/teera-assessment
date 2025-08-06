@@ -581,6 +581,250 @@
         },
         "description": "Generate reconciliation summary report. Uses Celery background tasks when Redis is available, or returns immediate response when not."
       }
+    },
+    {
+      "name": "6. List All Transactions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains transactions', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('results');",
+              "    pm.expect(responseJson.results).to.be.an('array');",
+              "    pm.expect(responseJson).to.have.property('count');",
+              "});",
+              "",
+              "pm.test('Pagination information present', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('next');",
+              "    pm.expect(responseJson).to.have.property('previous');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/bank/transactions/?limit=25&offset=0&ordering=-transaction_date",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "bank", "transactions", ""],
+          "query": [
+            {
+              "key": "limit",
+              "value": "25",
+              "description": "Number of results per page"
+            },
+            {
+              "key": "offset",
+              "value": "0",
+              "description": "Starting position for results"
+            },
+            {
+              "key": "ordering",
+              "value": "-transaction_date",
+              "description": "Sort by transaction date (newest first)"
+            }
+          ]
+        },
+        "description": "Get paginated list of all bank transactions with filtering and sorting options"
+      }
+    },
+    {
+      "name": "7. List Upload History",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains uploads', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('results');",
+              "    pm.expect(responseJson.results).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Upload records have required fields', function () {",
+              "    const responseJson = pm.response.json();",
+              "    if (responseJson.results.length > 0) {",
+              "        const upload = responseJson.results[0];",
+              "        pm.expect(upload).to.have.property('id');",
+              "        pm.expect(upload).to.have.property('filename');",
+              "        pm.expect(upload).to.have.property('status');",
+              "        pm.expect(upload).to.have.property('created_at');",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/bank/uploads/?ordering=-created_at",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "bank", "uploads", ""],
+          "query": [
+            {
+              "key": "ordering",
+              "value": "-created_at",
+              "description": "Sort by upload date (newest first)"
+            }
+          ]
+        },
+        "description": "View history of all file uploads and their processing status"
+      }
+    },
+    {
+      "name": "8. API Root - System Information",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains system information', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('system');",
+              "    pm.expect(responseJson).to.have.property('endpoints');",
+              "    pm.expect(responseJson).to.have.property('usage');",
+              "});",
+              "",
+              "pm.test('Endpoints information available', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.endpoints).to.have.property('authentication');",
+              "    pm.expect(responseJson.endpoints).to.have.property('bank_reconciliation_simplified');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", ""]
+        },
+        "description": "Get system information, available endpoints, and usage instructions. No authentication required."
+      }
+    },
+    {
+      "name": "9. Trigger ML Matching",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('ML matching request successful', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains matching results', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('success');",
+              "    ",
+              "    if (responseJson.task_id) {",
+              "        pm.globals.set('ml_task_id', responseJson.task_id);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"transaction_ids\": [\"{{sample_transaction_id}}\"],\n    \"operation\": \"trigger_ml_matching\",\n    \"confidence_threshold\": 0.8,\n    \"notes\": \"ML matching triggered via Postman\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/bank/reconcile/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "bank", "reconcile", ""]
+        },
+        "description": "Trigger ML-powered matching for specific transactions. Uses machine learning models to find potential matches."
+      }
+    },
+    {
+      "name": "10. Get API Documentation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Documentation accessible', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Content type is HTML', function () {",
+              "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/docs/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "docs", ""]
+        },
+        "description": "Access interactive Swagger UI documentation for all API endpoints"
+      }
     }
   ]
 }
