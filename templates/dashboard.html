@@ -1,0 +1,151 @@
+{% extends 'base.html' %} {% block title %}Dashboard - Bank Reconciliation
+System{% endblock %} {% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Dashboard</h1>
+  <div>
+    <span class="badge bg-info">{{ user.profile.company.name }}</span>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-3">
+    <div class="card text-white bg-primary">
+      <div class="card-header">
+        <i class="fas fa-list me-2"></i>Total Transactions
+      </div>
+      <div class="card-body">
+        <h2 class="card-title">{{ stats.total_transactions|default:0 }}</h2>
+        <p class="card-text">This month</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-white bg-success">
+      <div class="card-header"><i class="fas fa-check me-2"></i>Matched</div>
+      <div class="card-body">
+        <h2 class="card-title">{{ stats.matched_transactions|default:0 }}</h2>
+        <p class="card-text">{{ stats.match_percentage|default:0 }}% matched</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-white bg-warning">
+      <div class="card-header"><i class="fas fa-clock me-2"></i>Unmatched</div>
+      <div class="card-body">
+        <h2 class="card-title">{{ stats.unmatched_transactions|default:0 }}</h2>
+        <p class="card-text">Needs attention</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-white bg-info">
+      <div class="card-header"><i class="fas fa-robot me-2"></i>ML Matches</div>
+      <div class="card-body">
+        <h2 class="card-title">{{ stats.ml_matches|default:0 }}</h2>
+        <p class="card-text">Auto-matched</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h5>Recent Transactions</h5>
+      </div>
+      <div class="card-body">
+        {% if recent_transactions %}
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for transaction in recent_transactions %}
+              <tr>
+                <td>{{ transaction.transaction_date }}</td>
+                <td>{{ transaction.description|truncatechars:50 }}</td>
+                <td>${{ transaction.amount }}</td>
+                <td>
+                  {% if transaction.status == 'matched' %}
+                  <span class="badge bg-success">Matched</span>
+                  {% elif transaction.status == 'unmatched' %}
+                  <span class="badge bg-warning">Unmatched</span>
+                  {% else %}
+                  <span class="badge bg-secondary"
+                    >{{ transaction.status|title }}</span
+                  >
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No transactions found.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5>Quick Actions</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a
+            href="{% url 'reconciliation_web:file_upload' %}"
+            class="btn btn-primary"
+          >
+            <i class="fas fa-upload me-2"></i>Upload Bank Statement
+          </a>
+          <a
+            href="{% url 'reconciliation_web:manual_reconciliation' %}"
+            class="btn btn-warning"
+          >
+            <i class="fas fa-handshake me-2"></i>Manual Reconciliation
+          </a>
+          <a href="{% url 'reconciliation_web:reports' %}" class="btn btn-info">
+            <i class="fas fa-chart-bar me-2"></i>Generate Report
+          </a>
+          <a href="/api/docs/" class="btn btn-secondary">
+            <i class="fas fa-code me-2"></i>API Documentation
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5>System Status</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <span>ML Model Status:</span>
+          <span class="badge bg-success">Active</span>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+          <span>Background Tasks:</span>
+          <span class="badge bg-info">Running</span>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+          <span>Last Sync:</span>
+          <small class="text-muted">{{ last_sync|default:"Never" }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
