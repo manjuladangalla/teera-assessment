@@ -1,53 +1,68 @@
 invoice_number,customer_code,customer_name,customer_email,amount_due,tax_amount,total_amount,issue_date,due_date,status,description,reference_number
-INV-2025-001,ENT001,Enterprise Solutions,accounts@entsol.com,5115.88,767.38,5883.26,2025-06-06,2025-07-06,paid,Web Development Services - Enterprise Solutions,REF-ENT001-001
-INV-2025-002,DIGI001,Digital Marketing Co,pay@digmark.com,2290.14,343.52,2633.66,2025-06-05,2025-07-05,paid,Business Intelligence Dashboard - Digital Marketing Co,REF-DIGI001-002
-INV-2025-003,ENT001,Enterprise Solutions,accounts@entsol.com,10899.11,1634.87,12533.98,2025-06-01,2025-07-01,paid,Cloud Migration Services - Enterprise Solutions,REF-ENT001-003
-INV-2025-004,RET001,Retail Chain Ltd,finance@retail.com,3272.79,490.92,3763.71,2025-06-09,2025-07-09,paid,Cloud Migration Services - Retail Chain Ltd,REF-RET001-004
-INV-2025-005,START001,StartUp Ventures,billing@startup.com,3183.77,477.57,3661.34,2025-06-08,2025-07-08,paid,SEO Optimization Package - StartUp Ventures,REF-START001-005
-INV-2025-006,ACME001,Acme Corporation,billing@acme.com,13818.05,2072.71,15890.759999999998,2025-06-14,2025-07-14,sent,Software License Renewal - Acme Corporation,REF-ACME001-006
-INV-2025-007,START001,StartUp Ventures,billing@startup.com,1138.64,170.8,1309.44,2025-06-13,2025-07-13,paid,Learning Management System - StartUp Ventures,REF-START001-007
-INV-2025-008,MFG001,Manufacturing Inc,ap@mfginc.com,13301.68,1995.25,15296.93,2025-06-14,2025-07-14,paid,Video Editing Software License - Manufacturing Inc,REF-MFG001-008
-INV-2025-009,MFG001,Manufacturing Inc,ap@mfginc.com,13140.51,1971.08,15111.59,2025-06-12,2025-07-12,paid,Database Optimization - Manufacturing Inc,REF-MFG001-009
-INV-2025-010,START001,StartUp Ventures,billing@startup.com,2390.91,358.64,2749.5499999999997,2025-06-20,2025-07-20,paid,Business Intelligence Dashboard - StartUp Ventures,REF-START001-010
-INV-2025-011,MFG001,Manufacturing Inc,ap@mfginc.com,16247.59,2437.14,18684.73,2025-06-17,2025-07-17,paid,Project Management Software - Manufacturing Inc,REF-MFG001-011
-INV-2025-012,TECH001,Tech Solutions Ltd,accounts@techsol.com,2108.78,316.32,2425.1000000000004,2025-06-21,2025-07-21,paid,Annual Support Contract - Tech Solutions Ltd,REF-TECH001-012
-INV-2025-013,DIGI001,Digital Marketing Co,pay@digmark.com,2590.12,388.52,2978.64,2025-06-16,2025-07-16,paid,Web Development Services - Digital Marketing Co,REF-DIGI001-013
-INV-2025-014,ENT001,Enterprise Solutions,accounts@entsol.com,5210.89,781.63,5992.52,2025-06-24,2025-07-24,paid,Cloud Migration Services - Enterprise Solutions,REF-ENT001-014
-INV-2025-015,GLOB001,Global Enterprises,finance@global.com,13960.9,2094.13,16055.029999999999,2025-06-25,2025-07-25,paid,Learning Management System - Global Enterprises,REF-GLOB001-015
-INV-2025-016,GLOB001,Global Enterprises,finance@global.com,11656.09,1748.41,13404.5,2025-06-23,2025-07-23,sent,CRM Integration Services - Global Enterprises,REF-GLOB001-016
-INV-2025-017,RET001,Retail Chain Ltd,finance@retail.com,7208.78,1081.32,8290.1,2025-06-23,2025-07-23,paid,CRM Integration Services - Retail Chain Ltd,REF-RET001-017
-INV-2025-018,ACME001,Acme Corporation,billing@acme.com,14672.11,2200.82,16872.93,2025-06-22,2025-07-22,paid,Data Analytics Platform - Acme Corporation,REF-ACME001-018
-INV-2025-019,MFG001,Manufacturing Inc,ap@mfginc.com,19056.6,2858.49,21915.089999999997,2025-06-28,2025-07-28,paid,SEO Optimization Package - Manufacturing Inc,REF-MFG001-019
-INV-2025-020,TECH001,Tech Solutions Ltd,accounts@techsol.com,6907.05,1036.06,7943.110000000001,2025-06-23,2025-07-23,paid,POS System Integration - Tech Solutions Ltd,REF-TECH001-020
-INV-2025-021,MFG001,Manufacturing Inc,ap@mfginc.com,19963.2,2994.48,22957.68,2025-07-04,2025-08-03,paid,Database Optimization - Manufacturing Inc,REF-MFG001-021
-INV-2025-022,MFG001,Manufacturing Inc,ap@mfginc.com,21825.88,3273.88,25099.760000000002,2025-06-30,2025-07-30,paid,Software License Renewal - Manufacturing Inc,REF-MFG001-022
-INV-2025-023,ACME001,Acme Corporation,billing@acme.com,5965.4,894.81,6860.209999999999,2025-07-05,2025-08-04,sent,Annual Support Contract - Acme Corporation,REF-ACME001-023
-INV-2025-024,GLOB001,Global Enterprises,finance@global.com,15148.05,2272.21,17420.26,2025-07-05,2025-08-04,paid,ERP System Implementation - Global Enterprises,REF-GLOB001-024
-INV-2025-025,GLOB001,Global Enterprises,finance@global.com,15611.11,2341.67,17952.78,2025-06-29,2025-07-29,sent,Web Development Services - Global Enterprises,REF-GLOB001-025
-INV-2025-026,RET001,Retail Chain Ltd,finance@retail.com,7306.58,1095.99,8402.57,2025-07-02,2025-08-01,paid,CRM Integration Services - Retail Chain Ltd,REF-RET001-026
-INV-2025-027,ACME001,Acme Corporation,billing@acme.com,12427.43,1864.11,14291.54,2025-07-08,2025-08-07,paid,Cloud Migration Services - Acme Corporation,REF-ACME001-027
-INV-2025-028,MFG001,Manufacturing Inc,ap@mfginc.com,23226.59,3483.99,26710.58,2025-07-10,2025-08-09,paid,Security Audit Services - Manufacturing Inc,REF-MFG001-028
-INV-2025-029,GLOB001,Global Enterprises,finance@global.com,5833.28,874.99,6708.2699999999995,2025-07-12,2025-08-11,paid,Fleet Management System - Global Enterprises,REF-GLOB001-029
-INV-2025-030,DIGI001,Digital Marketing Co,pay@digmark.com,4889.04,733.36,5622.4,2025-07-10,2025-08-09,paid,Patient Management System - Digital Marketing Co,REF-DIGI001-030
-INV-2025-031,ENT001,Enterprise Solutions,accounts@entsol.com,9882.5,1482.38,11364.880000000001,2025-07-16,2025-08-15,paid,SEO Optimization Package - Enterprise Solutions,REF-ENT001-031
-INV-2025-032,TECH001,Tech Solutions Ltd,accounts@techsol.com,3776.69,566.5,4343.1900000000005,2025-07-15,2025-08-14,paid,Web Development Services - Tech Solutions Ltd,REF-TECH001-032
-INV-2025-033,ACME001,Acme Corporation,billing@acme.com,14362.49,2154.37,16516.86,2025-07-18,2025-08-17,paid,Database Optimization - Acme Corporation,REF-ACME001-033
-INV-2025-034,RET001,Retail Chain Ltd,finance@retail.com,5355.55,803.33,6158.88,2025-07-20,2025-08-19,paid,Database Optimization - Retail Chain Ltd,REF-RET001-034
-INV-2025-035,RET001,Retail Chain Ltd,finance@retail.com,3715.11,557.27,4272.38,2025-07-23,2025-08-22,sent,Video Editing Software License - Retail Chain Ltd,REF-RET001-035
-INV-2025-036,GLOB001,Global Enterprises,finance@global.com,24771.19,3715.68,28486.87,2025-07-24,2025-08-23,paid,Cloud Migration Services - Global Enterprises,REF-GLOB001-036
-INV-2025-037,START001,StartUp Ventures,billing@startup.com,2142.18,321.33,2463.5099999999998,2025-08-01,2025-08-31,paid,Fleet Management System - StartUp Ventures,REF-START001-037
-INV-2025-038,GLOB001,Global Enterprises,finance@global.com,19954.86,2993.23,22948.09,2025-08-01,2025-08-31,paid,Database Optimization - Global Enterprises,REF-GLOB001-038
-INV-2025-039,MFG001,Manufacturing Inc,ap@mfginc.com,15791.66,2368.75,18160.41,2025-07-29,2025-08-28,sent,API Development Services - Manufacturing Inc,REF-MFG001-039
-INV-2025-040,TECH001,Tech Solutions Ltd,accounts@techsol.com,6014.19,902.13,6916.32,2025-07-27,2025-08-26,paid,POS System Integration - Tech Solutions Ltd,REF-TECH001-040
-INV-2025-041,DIGI001,Digital Marketing Co,pay@digmark.com,3004.06,450.61,3454.67,2025-07-28,2025-08-27,sent,Video Editing Software License - Digital Marketing Co,REF-DIGI001-041
-INV-2025-042,DIGI001,Digital Marketing Co,pay@digmark.com,2849.53,427.43,3276.96,2025-08-04,2025-09-03,sent,Learning Management System - Digital Marketing Co,REF-DIGI001-042
-INV-2025-043,GLOB001,Global Enterprises,finance@global.com,6610.9,991.63,7602.53,2025-08-08,2025-09-07,sent,Patient Management System - Global Enterprises,REF-GLOB001-043
-INV-2025-044,DIGI001,Digital Marketing Co,pay@digmark.com,4046.29,606.94,4653.23,2025-08-04,2025-09-03,paid,Cloud Migration Services - Digital Marketing Co,REF-DIGI001-044
-INV-2025-045,DIGI001,Digital Marketing Co,pay@digmark.com,3688.6,553.29,4241.889999999999,2025-08-03,2025-09-02,paid,Mobile App Development - Digital Marketing Co,REF-DIGI001-045
-INV-2025-046,RET001,Retail Chain Ltd,finance@retail.com,3314.84,497.23,3812.07,2025-08-13,2025-09-12,paid,Mobile App Development - Retail Chain Ltd,REF-RET001-046
-INV-2025-047,DIGI001,Digital Marketing Co,pay@digmark.com,2050.53,307.58,2358.11,2025-08-14,2025-09-13,paid,POS System Integration - Digital Marketing Co,REF-DIGI001-047
-INV-2025-048,MFG001,Manufacturing Inc,ap@mfginc.com,12041.57,1806.24,13847.81,2025-08-13,2025-09-12,paid,ERP System Implementation - Manufacturing Inc,REF-MFG001-048
-INV-2025-049,DIGI001,Digital Marketing Co,pay@digmark.com,4542.29,681.34,5223.63,2025-08-12,2025-09-11,paid,POS System Integration - Digital Marketing Co,REF-DIGI001-049
-INV-2025-050,MFG001,Manufacturing Inc,ap@mfginc.com,17298.12,2594.72,19892.84,2025-08-18,2025-09-17,paid,Fleet Management System - Manufacturing Inc,REF-MFG001-050
-INV-2025-051,DIGI001,Digital Marketing Co,pay@digmark.com,3796.52,569.48,4366.0,2025-08-21,2025-09-20,paid,Video Editing Software License - Digital Marketing Co,REF-DIGI001-051
-INV-2025-052,START001,StartUp Ventures,billing@startup.com,1420.13,213.02,1633.15,2025-08-21,2025-09-20,paid,Annual Support Contract - StartUp Ventures,REF-START001-052
+INV-2025-001,GLOB001,Global Enterprises,finance@global.com,18788.65,2818.3,21606.95,2025-06-01,2025-07-01,paid,Security Audit Services - Global Enterprises,REF-GLOB001-001
+INV-2025-002,GLOB001,Global Enterprises,finance@global.com,20553.11,3082.97,23636.08,2025-06-07,2025-07-07,paid,CRM Integration Services - Global Enterprises,REF-GLOB001-002
+INV-2025-003,DIGI001,Digital Marketing Co,pay@digmark.com,3477.61,521.64,3999.25,2025-06-06,2025-07-06,paid,Video Editing Software License - Digital Marketing Co,REF-DIGI001-003
+INV-2025-004,RET001,Retail Chain Ltd,finance@retail.com,4875.17,731.28,5606.45,2025-06-07,2025-07-07,paid,Mobile App Development - Retail Chain Ltd,REF-RET001-004
+INV-2025-005,MFG001,Manufacturing Inc,ap@mfginc.com,24719.22,3707.88,28427.100000000002,2025-06-05,2025-07-05,paid,ERP System Implementation - Manufacturing Inc,REF-MFG001-005
+INV-2025-006,DIGI001,Digital Marketing Co,pay@digmark.com,1954.99,293.25,2248.24,2025-06-07,2025-07-07,sent,Learning Management System - Digital Marketing Co,REF-DIGI001-006
+INV-2025-007,MFG001,Manufacturing Inc,ap@mfginc.com,17018.22,2552.73,19570.95,2025-06-03,2025-07-03,sent,API Development Services - Manufacturing Inc,REF-MFG001-007
+INV-2025-008,START001,StartUp Ventures,billing@startup.com,1958.5,293.77,2252.27,2025-06-08,2025-07-08,paid,API Development Services - StartUp Ventures,REF-START001-008
+INV-2025-009,ENT001,Enterprise Solutions,accounts@entsol.com,8341.33,1251.2,9592.53,2025-06-09,2025-07-09,paid,Database Optimization - Enterprise Solutions,REF-ENT001-009
+INV-2025-010,START001,StartUp Ventures,billing@startup.com,2588.6,388.29,2976.89,2025-06-08,2025-07-08,paid,Risk Management Platform - StartUp Ventures,REF-START001-010
+INV-2025-011,MFG001,Manufacturing Inc,ap@mfginc.com,22183.53,3327.53,25511.059999999998,2025-06-12,2025-07-12,paid,Fleet Management System - Manufacturing Inc,REF-MFG001-011
+INV-2025-012,MFG001,Manufacturing Inc,ap@mfginc.com,26462.28,3969.34,30431.62,2025-06-15,2025-07-15,paid,Database Optimization - Manufacturing Inc,REF-MFG001-012
+INV-2025-013,ENT001,Enterprise Solutions,accounts@entsol.com,6896.64,1034.5,7931.14,2025-06-15,2025-07-15,sent,Database Optimization - Enterprise Solutions,REF-ENT001-013
+INV-2025-014,GLOB001,Global Enterprises,finance@global.com,13288.46,1993.27,15281.73,2025-06-21,2025-07-21,paid,Risk Management Platform - Global Enterprises,REF-GLOB001-014
+INV-2025-015,DIGI001,Digital Marketing Co,pay@digmark.com,4512.56,676.88,5189.4400000000005,2025-06-28,2025-07-28,paid,Business Intelligence Dashboard - Digital Marketing Co,REF-DIGI001-015
+INV-2025-016,TECH001,Tech Solutions Ltd,accounts@techsol.com,6474.14,971.12,7445.26,2025-06-26,2025-07-26,paid,Mobile App Development - Tech Solutions Ltd,REF-TECH001-016
+INV-2025-017,DIGI001,Digital Marketing Co,pay@digmark.com,4694.47,704.17,5398.64,2025-06-26,2025-07-26,paid,Risk Management Platform - Digital Marketing Co,REF-DIGI001-017
+INV-2025-018,ENT001,Enterprise Solutions,accounts@entsol.com,8185.78,1227.87,9413.65,2025-06-27,2025-07-27,paid,Security Audit Services - Enterprise Solutions,REF-ENT001-018
+INV-2025-019,RET001,Retail Chain Ltd,finance@retail.com,3935.79,590.37,4526.16,2025-06-22,2025-07-22,paid,SEO Optimization Package - Retail Chain Ltd,REF-RET001-019
+INV-2025-020,MFG001,Manufacturing Inc,ap@mfginc.com,19752.52,2962.88,22715.4,2025-06-26,2025-07-26,paid,Risk Management Platform - Manufacturing Inc,REF-MFG001-020
+INV-2025-021,START001,StartUp Ventures,billing@startup.com,1345.48,201.82,1547.3,2025-06-22,2025-07-22,paid,Patient Management System - StartUp Ventures,REF-START001-021
+INV-2025-022,ACME001,Acme Corporation,billing@acme.com,12094.05,1814.11,13908.16,2025-06-25,2025-07-25,paid,Video Editing Software License - Acme Corporation,REF-ACME001-022
+INV-2025-023,ENT001,Enterprise Solutions,accounts@entsol.com,4730.54,709.58,5440.12,2025-07-01,2025-07-31,sent,Project Management Software - Enterprise Solutions,REF-ENT001-023
+INV-2025-024,DIGI001,Digital Marketing Co,pay@digmark.com,2042.53,306.38,2348.91,2025-06-29,2025-07-29,paid,Annual Support Contract - Digital Marketing Co,REF-DIGI001-024
+INV-2025-025,MFG001,Manufacturing Inc,ap@mfginc.com,14831.01,2224.65,17055.66,2025-06-29,2025-07-29,paid,CRM Integration Services - Manufacturing Inc,REF-MFG001-025
+INV-2025-026,MFG001,Manufacturing Inc,ap@mfginc.com,22847.38,3427.11,26274.49,2025-07-04,2025-08-03,paid,Web Development Services - Manufacturing Inc,REF-MFG001-026
+INV-2025-027,RET001,Retail Chain Ltd,finance@retail.com,6588.76,988.31,7577.07,2025-06-29,2025-07-29,paid,Patient Management System - Retail Chain Ltd,REF-RET001-027
+INV-2025-028,START001,StartUp Ventures,billing@startup.com,2931.45,439.72,3371.17,2025-07-08,2025-08-07,paid,Risk Management Platform - StartUp Ventures,REF-START001-028
+INV-2025-029,RET001,Retail Chain Ltd,finance@retail.com,7434.9,1115.23,8550.13,2025-07-07,2025-08-06,sent,Database Optimization - Retail Chain Ltd,REF-RET001-029
+INV-2025-030,START001,StartUp Ventures,billing@startup.com,1886.42,282.96,2169.38,2025-07-11,2025-08-10,paid,CRM Integration Services - StartUp Ventures,REF-START001-030
+INV-2025-031,ACME001,Acme Corporation,billing@acme.com,11713.86,1757.08,13470.94,2025-07-10,2025-08-09,paid,Data Analytics Platform - Acme Corporation,REF-ACME001-031
+INV-2025-032,MFG001,Manufacturing Inc,ap@mfginc.com,15029.16,2254.37,17283.53,2025-07-13,2025-08-12,paid,Database Optimization - Manufacturing Inc,REF-MFG001-032
+INV-2025-033,DIGI001,Digital Marketing Co,pay@digmark.com,3542.4,531.36,4073.76,2025-07-16,2025-08-15,paid,ERP System Implementation - Digital Marketing Co,REF-DIGI001-033
+INV-2025-034,ENT001,Enterprise Solutions,accounts@entsol.com,10814.36,1622.15,12436.51,2025-07-14,2025-08-13,paid,Patient Management System - Enterprise Solutions,REF-ENT001-034
+INV-2025-035,MFG001,Manufacturing Inc,ap@mfginc.com,9825.61,1473.84,11299.45,2025-07-18,2025-08-17,paid,API Development Services - Manufacturing Inc,REF-MFG001-035
+INV-2025-036,ACME001,Acme Corporation,billing@acme.com,8670.59,1300.59,9971.18,2025-07-25,2025-08-24,paid,ERP System Implementation - Acme Corporation,REF-ACME001-036
+INV-2025-037,GLOB001,Global Enterprises,finance@global.com,16174.12,2426.12,18600.24,2025-07-25,2025-08-24,paid,API Development Services - Global Enterprises,REF-GLOB001-037
+INV-2025-038,DIGI001,Digital Marketing Co,pay@digmark.com,2063.99,309.6,2373.5899999999997,2025-07-20,2025-08-19,paid,Data Analytics Platform - Digital Marketing Co,REF-DIGI001-038
+INV-2025-039,ACME001,Acme Corporation,billing@acme.com,12605.14,1890.77,14495.91,2025-07-22,2025-08-21,paid,CRM Integration Services - Acme Corporation,REF-ACME001-039
+INV-2025-040,RET001,Retail Chain Ltd,finance@retail.com,7562.7,1134.4,8697.1,2025-07-23,2025-08-22,paid,Web Development Services - Retail Chain Ltd,REF-RET001-040
+INV-2025-041,RET001,Retail Chain Ltd,finance@retail.com,3900.89,585.13,4486.0199999999995,2025-07-23,2025-08-22,paid,Data Analytics Platform - Retail Chain Ltd,REF-RET001-041
+INV-2025-042,RET001,Retail Chain Ltd,finance@retail.com,5021.69,753.25,5774.94,2025-08-01,2025-08-31,paid,Data Analytics Platform - Retail Chain Ltd,REF-RET001-042
+INV-2025-043,RET001,Retail Chain Ltd,finance@retail.com,5588.0,838.2,6426.2,2025-07-27,2025-08-26,paid,Security Audit Services - Retail Chain Ltd,REF-RET001-043
+INV-2025-044,START001,StartUp Ventures,billing@startup.com,1116.36,167.45,1283.81,2025-07-29,2025-08-28,paid,Mobile App Development - StartUp Ventures,REF-START001-044
+INV-2025-045,RET001,Retail Chain Ltd,finance@retail.com,4994.26,749.14,5743.400000000001,2025-08-01,2025-08-31,paid,Cloud Migration Services - Retail Chain Ltd,REF-RET001-045
+INV-2025-046,GLOB001,Global Enterprises,finance@global.com,6905.62,1035.84,7941.46,2025-07-27,2025-08-26,paid,Security Audit Services - Global Enterprises,REF-GLOB001-046
+INV-2025-047,GLOB001,Global Enterprises,finance@global.com,15944.73,2391.71,18336.44,2025-08-02,2025-09-01,paid,CRM Integration Services - Global Enterprises,REF-GLOB001-047
+INV-2025-048,ACME001,Acme Corporation,billing@acme.com,8582.76,1287.41,9870.17,2025-07-31,2025-08-30,paid,CRM Integration Services - Acme Corporation,REF-ACME001-048
+INV-2025-049,START001,StartUp Ventures,billing@startup.com,1764.55,264.68,2029.23,2025-08-05,2025-09-04,paid,ERP System Implementation - StartUp Ventures,REF-START001-049
+INV-2025-050,RET001,Retail Chain Ltd,finance@retail.com,4331.96,649.79,4981.75,2025-08-08,2025-09-07,sent,Patient Management System - Retail Chain Ltd,REF-RET001-050
+INV-2025-051,DIGI001,Digital Marketing Co,pay@digmark.com,2552.04,382.81,2934.85,2025-08-07,2025-09-06,paid,Risk Management Platform - Digital Marketing Co,REF-DIGI001-051
+INV-2025-052,ACME001,Acme Corporation,billing@acme.com,13977.64,2096.65,16074.289999999999,2025-08-05,2025-09-04,paid,Software License Renewal - Acme Corporation,REF-ACME001-052
+INV-2025-053,RET001,Retail Chain Ltd,finance@retail.com,5280.03,792.0,6072.03,2025-08-08,2025-09-07,paid,Cloud Migration Services - Retail Chain Ltd,REF-RET001-053
+INV-2025-054,START001,StartUp Ventures,billing@startup.com,1391.52,208.73,1600.25,2025-08-04,2025-09-03,paid,Risk Management Platform - StartUp Ventures,REF-START001-054
+INV-2025-055,ENT001,Enterprise Solutions,accounts@entsol.com,4158.42,623.76,4782.18,2025-08-12,2025-09-11,paid,Database Optimization - Enterprise Solutions,REF-ENT001-055
+INV-2025-056,ENT001,Enterprise Solutions,accounts@entsol.com,5861.17,879.18,6740.35,2025-08-13,2025-09-12,paid,Mobile App Development - Enterprise Solutions,REF-ENT001-056
+INV-2025-057,MFG001,Manufacturing Inc,ap@mfginc.com,27809.39,4171.41,31980.8,2025-08-11,2025-09-10,paid,Security Audit Services - Manufacturing Inc,REF-MFG001-057
+INV-2025-058,GLOB001,Global Enterprises,finance@global.com,5921.72,888.26,6809.9800000000005,2025-08-15,2025-09-14,paid,Risk Management Platform - Global Enterprises,REF-GLOB001-058
+INV-2025-059,GLOB001,Global Enterprises,finance@global.com,20631.95,3094.79,23726.74,2025-08-15,2025-09-14,paid,Project Management Software - Global Enterprises,REF-GLOB001-059
+INV-2025-060,GLOB001,Global Enterprises,finance@global.com,6605.38,990.81,7596.1900000000005,2025-08-14,2025-09-13,sent,Business Intelligence Dashboard - Global Enterprises,REF-GLOB001-060
+INV-2025-061,MFG001,Manufacturing Inc,ap@mfginc.com,10043.63,1506.54,11550.169999999998,2025-08-12,2025-09-11,paid,POS System Integration - Manufacturing Inc,REF-MFG001-061
+INV-2025-062,RET001,Retail Chain Ltd,finance@retail.com,4620.03,693.0,5313.03,2025-08-11,2025-09-10,paid,Project Management Software - Retail Chain Ltd,REF-RET001-062
+INV-2025-063,ENT001,Enterprise Solutions,accounts@entsol.com,6515.16,977.27,7492.43,2025-08-17,2025-09-16,paid,Software License Renewal - Enterprise Solutions,REF-ENT001-063
+INV-2025-064,ENT001,Enterprise Solutions,accounts@entsol.com,5089.29,763.39,5852.68,2025-08-19,2025-09-18,paid,POS System Integration - Enterprise Solutions,REF-ENT001-064
+INV-2025-065,RET001,Retail Chain Ltd,finance@retail.com,7975.9,1196.38,9172.279999999999,2025-08-18,2025-09-17,paid,ERP System Implementation - Retail Chain Ltd,REF-RET001-065
+INV-2025-066,GLOB001,Global Enterprises,finance@global.com,19572.96,2935.94,22508.899999999998,2025-08-17,2025-09-16,sent,Learning Management System - Global Enterprises,REF-GLOB001-066
+INV-2025-067,ENT001,Enterprise Solutions,accounts@entsol.com,7930.27,1189.54,9119.810000000001,2025-08-19,2025-09-18,paid,Database Optimization - Enterprise Solutions,REF-ENT001-067

@@ -36,8 +36,13 @@ from .tasks import (
 from .permissions import IsCompanyMember
 # Temporarily commented out - filters not implemented yet
 # from .filters import BankTransactionFilter, ReconciliationLogFilter
-# Temporarily commented out - ML engine not implemented yet
-# from ml_engine.deep_learning_engine import MLModelManager
+# Deep learning engine integration
+try:
+    from ml_engine.deep_learning_engine import DeepLearningReconciliationEngine
+    ML_ENGINE_AVAILABLE = True
+except ImportError:
+    DeepLearningReconciliationEngine = None
+    ML_ENGINE_AVAILABLE = False
 from core.models import Invoice
 
 logger = logging.getLogger(__name__)
@@ -115,26 +120,82 @@ class BankTransactionViewSet(viewsets.ModelViewSet):
         transaction = self.get_object()
         top_k = int(request.query_params.get('top_k', 5))
         
+        if not ML_ENGINE_AVAILABLE:
+            return Response({
+                'error': 'ML engine not available',
+                'detail': 'Deep learning dependencies not installed. Run: pip install -r requirements.txt'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        
         try:
             # Check cache first
             cache_key = f"ml_suggestions_{transaction.id}_{top_k}"
             suggestions = cache.get(cache_key)
             
             if not suggestions:
-                matches = MLModelManager.get_best_matches(transaction, top_k=top_k)
-                suggestions = []
+                # Initialize ML engine
+                engine = DeepLearningReconciliationEngine()
                 
-                for invoice, confidence in matches:
+                # Check if model is trained
+                try:
+                    engine.load_model()
+                except FileNotFoundError:
+                    return Response({
+                        'error': 'Model not trained',
+                        'detail': 'Please train the model first using: python manage.py train_reconciliation_model'
+                    }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+                
+                # Get candidate invoices
+                candidate_invoices = Invoice.objects.filter(
+                    customer__company=request.user.profile.company,
+                    reconciliationlog__isnull=True,
+                    is_paid=False
+                )[:100]  # Limit for performance
+                
+                # Convert to engine format
+                invoice_list = []
+                for invoice in candidate_invoices:
+                    invoice_data = {
+                        'id': str(invoice.id),
+                        'invoice_number': invoice.invoice_number,
+                        'description': invoice.description or '',
+                        'total_amount': float(invoice.total_amount),
+                        'due_date': invoice.due_date.isoformat() if invoice.due_date else '',
+                        'customer_name': invoice.customer.name if invoice.customer else ''
+                    }
+                    invoice_list.append(invoice_data)
+                
+                # Convert transaction to engine format
+                transaction_data = {
+                    'id': str(transaction.id),
+                    'description': transaction.description or '',
+                    'amount': float(transaction.amount),
+                    'reference_number': transaction.reference_number or '',
+                    'transaction_date': transaction.transaction_date.isoformat(),
+                    'transaction_type': transaction.transaction_type or ''
+                }
+                
+                # Get ML predictions
+                matches = engine.find_best_matches(
+                    transaction_data,
+                    invoice_list,
+                    top_k=top_k,
+                    min_confidence=0.3
+                )
+                
+                suggestions = []
+                for match in matches:
+                    invoice_data = match['invoice']
                     suggestions.append({
-                        'invoice_id': str(invoice.id),
-                        'confidence': confidence,
+                        'invoice_id': invoice_data['id'],
+                        'confidence': match['confidence'],
                         'invoice_details': {
-                            'customer_name': invoice.customer.name,
-                            'amount_due': float(invoice.amount_due),
-                            'due_date': invoice.due_date.isoformat(),
-                            'description': invoice.description,
-                            'status': invoice.status
-                        }
+                            'invoice_number': invoice_data['invoice_number'],
+                            'customer_name': invoice_data['customer_name'],
+                            'total_amount': invoice_data['total_amount'],
+                            'due_date': invoice_data['due_date'],
+                            'description': invoice_data['description']
+                        },
+                        'match_features': match['features']
                     })
                 
                 # Cache for 30 minutes
@@ -184,6 +245,7 @@ class BankTransactionViewSet(viewsets.ModelViewSet):
             notes = serializer.validated_data.get('notes', '')
             
             reconciliation_logs = []
+            total_invoice_amount = 0
             
             for invoice_id in invoice_ids:
                 try:
@@ -192,23 +254,31 @@ class BankTransactionViewSet(viewsets.ModelViewSet):
                         customer__company=request.user.profile.company
                     )
                     
+                    total_invoice_amount += invoice.total_amount
+                    
                     # Create reconciliation log
                     log = ReconciliationLog.objects.create(
                         transaction=transaction,
                         invoice=invoice,
                         matched_by='manual',
                         confidence_score=1.0,  # Manual matches have 100% confidence
+                        amount_matched=min(invoice.total_amount, transaction.amount),
                         user=request.user,
                         ip_address=request.META.get('REMOTE_ADDR'),
-                        notes=notes,
                         metadata={
                             'manual_reconciliation': True,
                             'reconciled_at': timezone.now().isoformat(),
-                            'user_agent': request.META.get('HTTP_USER_AGENT', '')
+                            'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+                            'notes': notes
                         }
                     )
                     
                     reconciliation_logs.append(log)
+                    
+                    # Update invoice status
+                    invoice.status = 'paid'
+                    invoice.paid_date = timezone.now().date() if hasattr(invoice, 'paid_date') else None
+                    invoice.save()
                     
                 except Invoice.DoesNotExist:
                     return Response(
@@ -216,18 +286,21 @@ class BankTransactionViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_404_NOT_FOUND
                     )
             
-            # Update transaction status
-            if reconciliation_logs:
-                transaction.status = 'matched' if len(reconciliation_logs) == 1 else 'partially_matched'
-                transaction.save()
-                
-                # Update invoice statuses
-                for log in reconciliation_logs:
-                    log.invoice.status = 'paid'
-                    log.invoice.save()
+            # Update transaction status based on reconciliation
+            if len(reconciliation_logs) == 1 and abs(total_invoice_amount - transaction.amount) < 0.01:
+                transaction.status = 'matched'
+            else:
+                transaction.status = 'partially_matched'
+            transaction.save()
             
             serializer = ReconciliationLogSerializer(reconciliation_logs, many=True)
-            return Response(serializer.data)
+            return Response({
+                'success': True,
+                'message': f'Successfully reconciled {len(reconciliation_logs)} invoice(s)',
+                'reconciliation_logs': serializer.data,
+                'transaction_status': transaction.status,
+                'total_amount_matched': float(total_invoice_amount)
+            })
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -290,20 +363,40 @@ class BankTransactionViewSet(viewsets.ModelViewSet):
             
             reconciled = 0
             for transaction in transactions:
-                # Mark as matched - in a real implementation this would
-                # involve matching with specific invoices
-                transaction.status = 'matched'
-                transaction.save()
-                
-                # Create reconciliation log
-                ReconciliationLog.objects.create(
-                    transaction=transaction,
-                    invoice=None,  # Would be set to actual invoice in real implementation
-                    match_type='manual',
-                    confidence_score=100.0,
-                    reconciled_by=request.user,
-                    notes=f"Bulk reconciled via API"
-                )
+                if operation == 'trigger_ml_matching':
+                    # Mark as matched - in a real implementation this would
+                    # involve matching with specific invoices
+                    transaction.status = 'matched'
+                    transaction.save()
+                    
+                    # For bulk operations without specific invoices, 
+                    # we'll update the transaction's metadata instead of creating logs
+                    transaction.raw_data.update({
+                        'bulk_operation': operation,
+                        'processed_by': request.user.username,
+                        'processed_at': timezone.now().isoformat(),
+                        'notes': 'Bulk reconciled via API'
+                    })
+                    transaction.save()
+                    
+                elif operation == 'mark_ignored':
+                    transaction.status = 'ignored'
+                    transaction.raw_data.update({
+                        'bulk_operation': operation,
+                        'processed_by': request.user.username,
+                        'processed_at': timezone.now().isoformat()
+                    })
+                    transaction.save()
+                    
+                elif operation == 'mark_disputed':
+                    transaction.status = 'disputed'
+                    transaction.raw_data.update({
+                        'bulk_operation': operation,
+                        'processed_by': request.user.username,
+                        'processed_at': timezone.now().isoformat()
+                    })
+                    transaction.save()
+                    
                 reconciled += 1
             
             return Response({'reconciled': reconciled})

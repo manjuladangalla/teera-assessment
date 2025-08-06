@@ -1,0 +1,696 @@
+{% extends 'base.html' %}
+
+{% block title %}Transactions - Bank Reconciliation System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .transaction-row:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+    
+    .status-badge {
+        font-size: 0.875em;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .amount-positive {
+        color: #28a745;
+        font-weight: 600;
+    }
+    
+    .amount-negative {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    
+    .quick-stats {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .export-buttons {
+        gap: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="fas fa-list me-2"></i>Bank Transactions</h1>
+            <p class="text-muted">View and manage all bank transactions</p>
+        </div>
+        <div class="d-flex export-buttons">
+            <button class="btn btn-outline-primary" onclick="exportTransactions('csv')">
+                <i class="fas fa-file-csv me-1"></i>Export CSV
+            </button>
+            <button class="btn btn-outline-success" onclick="exportTransactions('excel')">
+                <i class="fas fa-file-excel me-1"></i>Export Excel
+            </button>
+            <a href="{% url 'reconciliation_web:manual_reconciliation' %}" class="btn btn-primary">
+                <i class="fas fa-handshake me-1"></i>Reconcile
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats p-4">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <h3>{{ transactions|length }}</h3>
+                <p class="mb-0">Total Transactions</p>
+            </div>
+            <div class="col-md-3">
+                <h3 id="matchedCount">0</h3>
+                <p class="mb-0">Matched</p>
+            </div>
+            <div class="col-md-3">
+                <h3 id="unmatchedCount">0</h3>
+                <p class="mb-0">Unmatched</p>
+            </div>
+            <div class="col-md-3">
+                <h3 id="totalAmount">$0.00</h3>
+                <p class="mb-0">Total Amount</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Filters -->
+    <div class="filter-card p-4">
+        <form method="GET" class="row g-3" id="filterForm">
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select" onchange="applyFilters()">
+                    <option value="">All Statuses</option>
+                    <option value="matched" {% if filter_status == 'matched' %}selected{% endif %}>Matched</option>
+                    <option value="unmatched" {% if filter_status == 'unmatched' %}selected{% endif %}>Unmatched</option>
+                    <option value="partially_matched" {% if filter_status == 'partially_matched' %}selected{% endif %}>Partially Matched</option>
+                    <option value="disputed" {% if filter_status == 'disputed' %}selected{% endif %}>Disputed</option>
+                    <option value="ignored" {% if filter_status == 'ignored' %}selected{% endif %}>Ignored</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Date From</label>
+                <input type="date" name="date_from" class="form-control" 
+                       value="{{ filter_date_from }}" onchange="applyFilters()">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Date To</label>
+                <input type="date" name="date_to" class="form-control" 
+                       value="{{ filter_date_to }}" onchange="applyFilters()">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Description, reference, amount..." 
+                           value="{{ filter_search }}" onkeyup="debounceSearch()">
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearFilters()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+        
+        <!-- Quick Filter Buttons -->
+        <div class="mt-3">
+            <span class="me-2">Quick filters:</span>
+            <button class="btn btn-sm btn-outline-warning me-2" onclick="quickFilter('unmatched')">
+                <i class="fas fa-clock me-1"></i>Unmatched Only
+            </button>
+            <button class="btn btn-sm btn-outline-success me-2" onclick="quickFilter('matched')">
+                <i class="fas fa-check me-1"></i>Matched Only
+            </button>
+            <button class="btn btn-sm btn-outline-info me-2" onclick="quickFilter('today')">
+                <i class="fas fa-calendar-day me-1"></i>Today
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="quickFilter('week')">
+                <i class="fas fa-calendar-week me-1"></i>This Week
+            </button>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="fas fa-table me-2"></i>Transactions</h5>
+            <div class="d-flex align-items-center">
+                <label class="me-2">Show:</label>
+                <select class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+                    <option value="25">25</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="transactionsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th onclick="sortTable('date')" class="sortable">
+                                Date <i class="fas fa-sort"></i>
+                            </th>
+                            <th onclick="sortTable('description')" class="sortable">
+                                Description <i class="fas fa-sort"></i>
+                            </th>
+                            <th onclick="sortTable('amount')" class="sortable">
+                                Amount <i class="fas fa-sort"></i>
+                            </th>
+                            <th>Reference</th>
+                            <th onclick="sortTable('status')" class="sortable">
+                                Status <i class="fas fa-sort"></i>
+                            </th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                        <tr class="transaction-row" 
+                            data-status="{{ transaction.status }}"
+                            data-amount="{{ transaction.amount }}"
+                            data-date="{{ transaction.transaction_date|date:'Y-m-d' }}"
+                            onclick="selectRow(this, event)">
+                            <td>
+                                <input type="checkbox" class="transaction-checkbox" 
+                                       value="{{ transaction.id }}" onclick="event.stopPropagation()">
+                            </td>
+                            <td>{{ transaction.transaction_date|date:"M d, Y" }}</td>
+                            <td>
+                                <div>
+                                    <strong>{{ transaction.description|truncatechars:60 }}</strong>
+                                    {% if transaction.transaction_type %}
+                                    <small class="text-muted d-block">{{ transaction.transaction_type|title }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="{% if transaction.amount >= 0 %}amount-positive{% else %}amount-negative{% endif %}">
+                                    ${{ transaction.amount|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {% if transaction.reference_number %}
+                                        {{ transaction.reference_number }}
+                                    {% elif transaction.bank_reference %}
+                                        {{ transaction.bank_reference }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if transaction.status == 'matched' %}
+                                    <span class="badge bg-success status-badge">Matched</span>
+                                {% elif transaction.status == 'unmatched' %}
+                                    <span class="badge bg-warning status-badge">Unmatched</span>
+                                {% elif transaction.status == 'partially_matched' %}
+                                    <span class="badge bg-info status-badge">Partial</span>
+                                {% elif transaction.status == 'disputed' %}
+                                    <span class="badge bg-danger status-badge">Disputed</span>
+                                {% elif transaction.status == 'ignored' %}
+                                    <span class="badge bg-secondary status-badge">Ignored</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark status-badge">{{ transaction.status|title }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'reconciliation_web:transaction_detail' transaction.id %}" 
+                                       class="btn btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if transaction.status == 'unmatched' %}
+                                    <button class="btn btn-outline-success" 
+                                            onclick="quickReconcile('{{ transaction.id }}')" 
+                                            title="Quick Reconcile">
+                                        <i class="fas fa-handshake"></i>
+                                    </button>
+                                    {% endif %}
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#">
+                                                <i class="fas fa-edit me-2"></i>Edit
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#">
+                                                <i class="fas fa-flag me-2"></i>Mark as Disputed
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#">
+                                                <i class="fas fa-eye-slash me-2"></i>Ignore
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#">
+                                                <i class="fas fa-trash me-2"></i>Delete
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h5>No transactions found</h5>
+                                <p class="text-muted">Try adjusting your filters or search criteria.</p>
+                                <a href="{% url 'reconciliation_web:file_upload' %}" class="btn btn-primary">
+                                    <i class="fas fa-upload me-1"></i>Upload Bank Statement
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="card-footer">
+            <nav aria-label="Transactions pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                Previous
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                Next
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bulk Actions Panel -->
+    <div id="bulkActionsPanel" class="card mt-3" style="display: none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span id="selectedCount">0</span> transactions selected
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="bulkReconcile()">
+                        <i class="fas fa-handshake me-1"></i>Bulk Reconcile
+                    </button>
+                    <button class="btn btn-warning" onclick="bulkMarkAs('disputed')">
+                        <i class="fas fa-flag me-1"></i>Mark as Disputed
+                    </button>
+                    <button class="btn btn-secondary" onclick="bulkMarkAs('ignored')">
+                        <i class="fas fa-eye-slash me-1"></i>Ignore
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="bulkDelete()">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Reconcile Modal -->
+<div class="modal fade" id="quickReconcileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Reconcile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="quickReconcileContent">
+                    <!-- Content will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let searchTimeout;
+let sortOrder = {};
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    updateQuickStats();
+    setupTableSorting();
+});
+
+function updateQuickStats() {
+    const rows = document.querySelectorAll('.transaction-row');
+    let matched = 0, unmatched = 0, total = 0;
+    
+    rows.forEach(row => {
+        const status = row.dataset.status;
+        const amount = parseFloat(row.dataset.amount);
+        
+        if (status === 'matched') matched++;
+        else if (status === 'unmatched') unmatched++;
+        
+        total += amount;
+    });
+    
+    document.getElementById('matchedCount').textContent = matched;
+    document.getElementById('unmatchedCount').textContent = unmatched;
+    document.getElementById('totalAmount').textContent = '$' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+}
+
+function applyFilters() {
+    document.getElementById('filterForm').submit();
+}
+
+function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        applyFilters();
+    }, 500);
+}
+
+function clearFilters() {
+    window.location.href = window.location.pathname;
+}
+
+function quickFilter(type) {
+    const form = document.getElementById('filterForm');
+    const statusSelect = form.querySelector('[name="status"]');
+    const dateFromInput = form.querySelector('[name="date_from"]');
+    const dateToInput = form.querySelector('[name="date_to"]');
+    
+    // Clear existing values
+    statusSelect.value = '';
+    dateFromInput.value = '';
+    dateToInput.value = '';
+    
+    const today = new Date();
+    
+    switch(type) {
+        case 'unmatched':
+            statusSelect.value = 'unmatched';
+            break;
+        case 'matched':
+            statusSelect.value = 'matched';
+            break;
+        case 'today':
+            const todayStr = today.toISOString().split('T')[0];
+            dateFromInput.value = todayStr;
+            dateToInput.value = todayStr;
+            break;
+        case 'week':
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            dateFromInput.value = weekAgo.toISOString().split('T')[0];
+            dateToInput.value = today.toISOString().split('T')[0];
+            break;
+    }
+    
+    applyFilters();
+}
+
+function sortTable(column) {
+    const table = document.getElementById('transactionsTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.no-results)'));
+    
+    // Toggle sort order
+    if (!sortOrder[column]) sortOrder[column] = 'asc';
+    else if (sortOrder[column] === 'asc') sortOrder[column] = 'desc';
+    else sortOrder[column] = 'asc';
+    
+    rows.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch(column) {
+            case 'date':
+                aValue = new Date(a.dataset.date);
+                bValue = new Date(b.dataset.date);
+                break;
+            case 'amount':
+                aValue = parseFloat(a.dataset.amount);
+                bValue = parseFloat(b.dataset.amount);
+                break;
+            case 'status':
+                aValue = a.dataset.status;
+                bValue = b.dataset.status;
+                break;
+            case 'description':
+                aValue = a.cells[2].textContent.trim().toLowerCase();
+                bValue = b.cells[2].textContent.trim().toLowerCase();
+                break;
+            default:
+                return 0;
+        }
+        
+        if (sortOrder[column] === 'asc') {
+            return aValue > bValue ? 1 : -1;
+        } else {
+            return aValue < bValue ? 1 : -1;
+        }
+    });
+    
+    // Reorder rows
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Update sort indicators
+    document.querySelectorAll('.sortable i').forEach(icon => {
+        icon.className = 'fas fa-sort';
+    });
+    
+    const currentHeader = document.querySelector(`th[onclick="sortTable('${column}')"] i`);
+    if (sortOrder[column] === 'asc') {
+        currentHeader.className = 'fas fa-sort-up';
+    } else {
+        currentHeader.className = 'fas fa-sort-down';
+    }
+}
+
+function setupTableSorting() {
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.style.cursor = 'pointer';
+    });
+}
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.transaction-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateBulkActionsPanel();
+}
+
+function selectRow(row, event) {
+    if (event.target.type === 'checkbox') return;
+    
+    const checkbox = row.querySelector('.transaction-checkbox');
+    checkbox.checked = !checkbox.checked;
+    updateBulkActionsPanel();
+}
+
+function updateBulkActionsPanel() {
+    const checkedBoxes = document.querySelectorAll('.transaction-checkbox:checked');
+    const panel = document.getElementById('bulkActionsPanel');
+    const count = document.getElementById('selectedCount');
+    
+    count.textContent = checkedBoxes.length;
+    
+    if (checkedBoxes.length > 0) {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+function quickReconcile(transactionId) {
+    // Open quick reconcile modal with transaction details
+    const modal = new bootstrap.Modal(document.getElementById('quickReconcileModal'));
+    const content = document.getElementById('quickReconcileContent');
+    
+    content.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading reconciliation options...</p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Load suggestions via AJAX
+    fetch(`/api/suggest-matches/${transactionId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.suggestions && data.suggestions.length > 0) {
+                content.innerHTML = generateQuickReconcileContent(data);
+            } else {
+                content.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5>No Suggestions Found</h5>
+                        <p class="text-muted">No matching invoices found for this transaction.</p>
+                        <a href="/reconcile/" class="btn btn-primary">Manual Reconciliation</a>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            content.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error loading suggestions: ${error.message}
+                </div>
+            `;
+        });
+}
+
+function generateQuickReconcileContent(data) {
+    let html = `
+        <h6>Transaction Amount: $${data.transaction_amount.toFixed(2)}</h6>
+        <p class="text-muted">Select an invoice to reconcile:</p>
+        <div class="list-group">
+    `;
+    
+    data.suggestions.forEach(suggestion => {
+        const confidenceColor = suggestion.confidence > 0.8 ? 'success' : suggestion.confidence > 0.5 ? 'warning' : 'secondary';
+        html += `
+            <button class="list-group-item list-group-item-action" 
+                    onclick="performQuickReconcile('${suggestion.invoice_id}')">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${suggestion.invoice_number}</strong>
+                        <small class="text-muted d-block">${suggestion.customer_name}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-${confidenceColor}">${Math.round(suggestion.confidence * 100)}%</span>
+                        <div class="fw-bold">$${suggestion.amount.toFixed(2)}</div>
+                    </div>
+                </div>
+            </button>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function performQuickReconcile(invoiceId) {
+    // Implementation would call the reconciliation API
+    console.log('Quick reconcile with invoice:', invoiceId);
+    // Close modal and refresh page
+    bootstrap.Modal.getInstance(document.getElementById('quickReconcileModal')).hide();
+}
+
+function bulkReconcile() {
+    const selected = getSelectedTransactions();
+    if (selected.length === 0) {
+        alert('Please select transactions to reconcile.');
+        return;
+    }
+    
+    // Implementation for bulk reconciliation
+    console.log('Bulk reconcile:', selected);
+}
+
+function bulkMarkAs(status) {
+    const selected = getSelectedTransactions();
+    if (selected.length === 0) {
+        alert('Please select transactions to update.');
+        return;
+    }
+    
+    if (confirm(`Mark ${selected.length} transactions as ${status}?`)) {
+        // Implementation for bulk status update
+        console.log('Bulk mark as', status, selected);
+    }
+}
+
+function bulkDelete() {
+    const selected = getSelectedTransactions();
+    if (selected.length === 0) {
+        alert('Please select transactions to delete.');
+        return;
+    }
+    
+    if (confirm(`Delete ${selected.length} transactions? This action cannot be undone.`)) {
+        // Implementation for bulk delete
+        console.log('Bulk delete:', selected);
+    }
+}
+
+function getSelectedTransactions() {
+    return Array.from(document.querySelectorAll('.transaction-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+}
+
+function exportTransactions(format) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', format);
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+
+function changePageSize(size) {
+    const params = new URLSearchParams(window.location.search);
+    if (size === 'all') {
+        params.delete('page');
+        params.set('per_page', '999999');
+    } else {
+        params.set('per_page', size);
+    }
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+
+// Add event listeners to checkboxes
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('transaction-checkbox')) {
+        updateBulkActionsPanel();
+    }
+});
+</script>
+{% endblock %}

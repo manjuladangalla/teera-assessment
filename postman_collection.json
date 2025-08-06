@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "bank-reconciliation-api",
-    "name": "Bank Reconciliation API",
-    "description": "Complete API collection for testing the Bank Reconciliation System",
+    "_postman_id": "bank-reconciliation-essential",
+    "name": "Bank Reconciliation System - Essential APIs",
+    "description": "Essential endpoints for bank reconciliation system with JWT authentication",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -19,15 +19,42 @@
     {
       "listen": "prerequest",
       "script": {
-        "type": "text/javascript",
-        "exec": [""]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [""]
+        "exec": [
+          "// Auto-refresh token if needed",
+          "if (!pm.globals.get('access_token') || pm.globals.get('token_expires') < Date.now()) {",
+          "    console.log('Getting fresh JWT token...');",
+          "    ",
+          "    const tokenRequest = {",
+          "        url: pm.environment.get('base_url') + '/api/auth/token/',",
+          "        method: 'POST',",
+          "        header: {",
+          "            'Content-Type': 'application/json'",
+          "        },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({",
+          "                username: pm.environment.get('username'),",
+          "                password: pm.environment.get('password')",
+          "            })",
+          "        }",
+          "    };",
+          "    ",
+          "    pm.sendRequest(tokenRequest, (err, response) => {",
+          "        if (err) {",
+          "            console.error('Token request failed:', err);",
+          "        } else if (response.code === 200) {",
+          "            const data = response.json();",
+          "            pm.globals.set('access_token', data.access);",
+          "            pm.globals.set('refresh_token', data.refresh);",
+          "            pm.globals.set('token_expires', Date.now() + 3600000); // 1 hour",
+          "            console.log('JWT token refreshed successfully');",
+          "        } else {",
+          "            console.error('Token request failed:', response.text());",
+          "        }",
+          "    });",
+          "}"
+        ],
+        "type": "text/javascript"
       }
     }
   ],
@@ -43,27 +70,26 @@
       "name": "Authentication",
       "item": [
         {
-          "name": "Obtain JWT Token",
+          "name": "Get JWT Token",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "// Test for successful authentication",
+                  "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.environment.set(\"access_token\", jsonData.access);",
-                  "    pm.environment.set(\"refresh_token\", jsonData.refresh);",
-                  "    console.log(\"Tokens saved to environment\");",
-                  "}",
-                  "",
-                  "pm.test(\"Response has access token\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('access');",
-                  "    pm.expect(jsonData).to.have.property('refresh');",
+                  "pm.test('Response has access token', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('access');",
+                  "    pm.expect(responseJson).to.have.property('refresh');",
+                  "    ",
+                  "    // Store tokens for use in other requests",
+                  "    pm.globals.set('access_token', responseJson.access);",
+                  "    pm.globals.set('refresh_token', responseJson.refresh);",
+                  "    pm.globals.set('token_expires', Date.now() + 3600000); // 1 hour",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -83,640 +109,365 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+              "raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/auth/token/",
               "host": ["{{base_url}}"],
               "path": ["api", "auth", "token", ""]
             },
-            "description": "Obtain JWT access and refresh tokens for API authentication"
-          },
-          "response": []
-        },
-        {
-          "name": "Refresh Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.environment.set(\"access_token\", jsonData.access);",
-                  "    console.log(\"Access token refreshed\");",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/auth/token/refresh/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "token", "refresh", ""]
-            },
-            "description": "Refresh the JWT access token using the refresh token"
-          },
-          "response": []
+            "description": "Get JWT access and refresh tokens for authentication"
+          }
         }
       ],
       "description": "Authentication endpoints for JWT tokens"
     },
     {
-      "name": "Bank Transactions",
-      "item": [
+      "name": "1. Upload Bank Statement",
+      "event": [
         {
-          "name": "List All Transactions",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has transactions\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('results');",
-                  "    pm.expect(jsonData.results).to.be.an('array');",
-                  "});",
-                  "",
-                  "pm.test(\"Response has pagination\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('count');",
-                  "    pm.expect(jsonData).to.have.property('next');",
-                  "    pm.expect(jsonData).to.have.property('previous');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/transactions/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "transactions", ""]
-            },
-            "description": "Get paginated list of all bank transactions"
-          },
-          "response": []
-        },
-        {
-          "name": "List Unmatched Transactions",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"All transactions are unmatched\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    jsonData.results.forEach(function(transaction) {",
-                  "        pm.expect(transaction.is_matched).to.eql(false);",
-                  "    });",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/unmatched/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "unmatched", ""]
-            },
-            "description": "Get list of unmatched bank transactions"
-          },
-          "response": []
-        },
-        {
-          "name": "Filter Transactions by Amount",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"All transactions meet amount criteria\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    jsonData.results.forEach(function(transaction) {",
-                  "        pm.expect(parseFloat(transaction.amount)).to.be.at.least(1000);",
-                  "    });",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/transactions/?amount_min=1000",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "transactions", ""],
-              "query": [
-                {
-                  "key": "amount_min",
-                  "value": "1000"
-                }
-              ]
-            },
-            "description": "Filter transactions with minimum amount"
-          },
-          "response": []
-        }
-      ],
-      "description": "Bank transaction management endpoints"
-    },
-    {
-      "name": "File Upload",
-      "item": [
-        {
-          "name": "Upload Bank Statement CSV",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "pm.test(\"Upload response contains task_id\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('task_id');",
-                  "    pm.expect(jsonData).to.have.property('message');",
-                  "});",
-                  "",
-                  "if (pm.response.code === 201) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.environment.set(\"last_task_id\", jsonData.task_id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file",
-                  "src": "sample_data/sample_bank_transactions.csv",
-                  "description": "Bank statement CSV file"
-                },
-                {
-                  "key": "file_type",
-                  "value": "bank_statement",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/upload/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "upload", ""]
-            },
-            "description": "Upload bank statement CSV file for processing"
-          },
-          "response": []
-        },
-        {
-          "name": "Upload Invoice CSV",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "pm.test(\"Upload response contains task_id\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('task_id');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file",
-                  "src": "sample_data/sample_invoices.csv",
-                  "description": "Invoice CSV file"
-                },
-                {
-                  "key": "file_type",
-                  "value": "invoice",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/upload/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "upload", ""]
-            },
-            "description": "Upload invoice CSV file"
-          },
-          "response": []
-        }
-      ],
-      "description": "File upload endpoints for bank statements and invoices"
-    },
-    {
-      "name": "Customers & Invoices",
-      "item": [
-        {
-          "name": "List Customers",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has customers\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('results');",
-                  "    pm.expect(jsonData.results).to.be.an('array');",
-                  "});",
-                  "",
-                  "if (pm.response.json().results.length > 0) {",
-                  "    const firstCustomer = pm.response.json().results[0];",
-                  "    pm.environment.set(\"sample_customer_id\", firstCustomer.id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/customers/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "customers", ""]
-            },
-            "description": "Get list of all customers"
-          },
-          "response": []
-        },
-        {
-          "name": "List Invoices",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has invoices\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('results');",
-                  "    pm.expect(jsonData.results).to.be.an('array');",
-                  "});",
-                  "",
-                  "if (pm.response.json().results.length > 0) {",
-                  "    const firstInvoice = pm.response.json().results[0];",
-                  "    pm.environment.set(\"sample_invoice_id\", firstInvoice.id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/invoices/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "invoices", ""]
-            },
-            "description": "Get list of all invoices"
-          },
-          "response": []
-        },
-        {
-          "name": "Get Invoice Details",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has invoice details\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('invoice_number');",
-                  "    pm.expect(jsonData).to.have.property('customer');",
-                  "    pm.expect(jsonData).to.have.property('total_amount');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/invoices/{{sample_invoice_id}}/",
-              "host": ["{{base_url}}"],
-              "path": [
-                "api",
-                "v1",
-                "bank",
-                "invoices",
-                "{{sample_invoice_id}}",
-                ""
-              ]
-            },
-            "description": "Get detailed information about a specific invoice"
-          },
-          "response": []
-        }
-      ],
-      "description": "Customer and invoice management endpoints"
-    },
-    {
-      "name": "Reconciliation",
-      "item": [
-        {
-          "name": "Manual Reconciliation",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Reconciliation successful\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('message');",
-                  "    pm.expect(jsonData.message).to.include('reconciled');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "// This script sets up sample IDs for reconciliation",
-                  "// In a real scenario, you would get these from previous API calls",
-                  "if (!pm.environment.get(\"sample_transaction_id\")) {",
-                  "    console.log(\"Please run 'List All Transactions' first to set sample_transaction_id\");",
-                  "}",
-                  "if (!pm.environment.get(\"sample_invoice_id\")) {",
-                  "    console.log(\"Please run 'List Invoices' first to set sample_invoice_id\");",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Upload successful', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response contains upload details', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('id');",
+              "    pm.expect(responseJson).to.have.property('filename');",
+              "    pm.expect(responseJson).to.have.property('status');",
+              "    ",
+              "    // Store upload ID for reference",
+              "    pm.globals.set('last_upload_id', responseJson.id);",
+              "});",
+              "",
+              "pm.test('Processing status is valid', function () {",
+              "    const responseJson = pm.response.json();",
+              "    const validStatuses = ['uploaded', 'processing', 'completed', 'failed'];",
+              "    pm.expect(validStatuses).to.include(responseJson.status);",
+              "});"
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"invoice_id\": \"{{sample_invoice_id}}\",\n  \"confidence_score\": 0.95,\n  \"notes\": \"Manual reconciliation via Postman API test\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/reconcile/{{sample_transaction_id}}/",
-              "host": ["{{base_url}}"],
-              "path": [
-                "api",
-                "v1",
-                "bank",
-                "reconcile",
-                "{{sample_transaction_id}}",
-                ""
-              ]
-            },
-            "description": "Manually reconcile a bank transaction with an invoice"
-          },
-          "response": []
+            "type": "text/javascript"
+          }
         },
         {
-          "name": "List Reconciliation Logs",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has logs\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('results');",
-                  "    pm.expect(jsonData.results).to.be.an('array');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/logs/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "logs", ""]
-            },
-            "description": "Get list of all reconciliation logs and activities"
-          },
-          "response": []
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Create sample CSV content for testing",
+              "const sampleCSV = 'date,description,amount,type\\n' +",
+              "    '2024-01-15,Office Supplies Purchase,150.00,debit\\n' +",
+              "    '2024-01-16,Client Payment Received,2500.00,credit\\n' +",
+              "    '2024-01-17,Utility Bill Payment,-75.50,debit\\n' +",
+              "    '2024-01-18,Software License Fee,-299.99,debit\\n' +",
+              "    '2024-01-19,Freelancer Payment,1200.00,credit';",
+              "",
+              "// Note: In actual use, you'll upload a real CSV file",
+              "console.log('Sample CSV ready for upload test');"
+            ],
+            "type": "text/javascript"
+          }
         }
       ],
-      "description": "Reconciliation and logging endpoints"
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": [],
+              "description": "CSV file containing bank transactions"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/bank/upload/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "bank", "upload", ""]
+        },
+        "description": "Upload a CSV file containing bank transactions for processing"
+      }
     },
     {
-      "name": "ML Models",
-      "item": [
+      "name": "2. Get Unmatched Transactions",
+      "event": [
         {
-          "name": "List ML Model Versions",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has model versions\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('results');",
-                  "    pm.expect(jsonData.results).to.be.an('array');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/ml-models/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "ml-models", ""]
-            },
-            "description": "Get list of ML model versions and their performance metrics"
-          },
-          "response": []
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is valid array or paginated results', function () {",
+              "    const responseJson = pm.response.json();",
+              "    ",
+              "    // Check if it's paginated (DRF format) or direct array",
+              "    if (responseJson.results) {",
+              "        pm.expect(responseJson.results).to.be.an('array');",
+              "        pm.expect(responseJson).to.have.property('count');",
+              "    } else {",
+              "        pm.expect(responseJson).to.be.an('array');",
+              "    }",
+              "});",
+              "",
+              "pm.test('Transactions have required fields', function () {",
+              "    const responseJson = pm.response.json();",
+              "    const transactions = responseJson.results || responseJson;",
+              "    ",
+              "    if (transactions.length > 0) {",
+              "        const transaction = transactions[0];",
+              "        pm.expect(transaction).to.have.property('id');",
+              "        pm.expect(transaction).to.have.property('amount');",
+              "        pm.expect(transaction).to.have.property('description');",
+              "        pm.expect(transaction).to.have.property('status');",
+              "        pm.expect(transaction.status).to.equal('unmatched');",
+              "        ",
+              "        // Store first transaction ID for reconciliation test",
+              "        pm.globals.set('sample_transaction_id', transaction.id);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
         }
       ],
-      "description": "Machine Learning model endpoints"
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/bank/unmatched/?limit=50",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "bank", "unmatched", ""],
+          "query": [
+            {
+              "key": "limit",
+              "value": "50",
+              "description": "Number of results to return"
+            }
+          ]
+        },
+        "description": "Get all unmatched bank transactions that need reconciliation"
+      }
     },
     {
-      "name": "Reports & Summaries",
-      "item": [
+      "name": "3. Reconcile Transactions",
+      "event": [
         {
-          "name": "List Reconciliation Summaries",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has summaries\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('results');",
-                  "    pm.expect(jsonData.results).to.be.an('array');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/bank/summaries/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "bank", "summaries", ""]
-            },
-            "description": "Get list of reconciliation summaries and reports"
-          },
-          "response": []
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Reconciliation successful', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains reconciliation details', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('success');",
+              "    pm.expect(responseJson.success).to.be.true;",
+              "    ",
+              "    if (responseJson.reconciliation_logs) {",
+              "        pm.expect(responseJson.reconciliation_logs).to.be.an('array');",
+              "    }",
+              "});",
+              "",
+              "pm.test('Transaction status updated', function () {",
+              "    const responseJson = pm.response.json();",
+              "    if (responseJson.transaction_status) {",
+              "        const validStatuses = ['matched', 'partially_matched'];",
+              "        pm.expect(validStatuses).to.include(responseJson.transaction_status);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Note: Replace transaction_id and invoice_ids with actual values",
+              "console.log('Make sure to update transaction_id and invoice_ids in the request body');"
+            ],
+            "type": "text/javascript"
+          }
         }
       ],
-      "description": "Reporting and summary endpoints"
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"transaction_ids\": [\"{{sample_transaction_id}}\"],\n    \"operation\": \"trigger_ml_matching\",\n    \"notes\": \"Manual reconciliation via Postman\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/bank/reconcile/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "bank", "reconcile", ""]
+        },
+        "description": "Manually reconcile one or more bank transactions with invoices"
+      }
     },
     {
-      "name": "API Health & Info",
-      "item": [
+      "name": "4. Get Reconciliation Logs",
+      "event": [
         {
-          "name": "API Schema",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response is valid OpenAPI schema\", function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('openapi');",
-                  "    pm.expect(jsonData).to.have.property('info');",
-                  "    pm.expect(jsonData).to.have.property('paths');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/schema/",
-              "host": ["{{base_url}}"],
-              "path": ["api", "schema", ""]
-            },
-            "description": "Get the OpenAPI schema for the API"
-          },
-          "response": []
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains logs', function () {",
+              "    const responseJson = pm.response.json();",
+              "    ",
+              "    // Check if it's paginated or direct array",
+              "    if (responseJson.results) {",
+              "        pm.expect(responseJson.results).to.be.an('array');",
+              "        pm.expect(responseJson).to.have.property('count');",
+              "    } else {",
+              "        pm.expect(responseJson).to.be.an('array');",
+              "    }",
+              "});",
+              "",
+              "pm.test('Logs have required fields', function () {",
+              "    const responseJson = pm.response.json();",
+              "    const logs = responseJson.results || responseJson;",
+              "    ",
+              "    if (logs.length > 0) {",
+              "        const log = logs[0];",
+              "        pm.expect(log).to.have.property('id');",
+              "        pm.expect(log).to.have.property('matched_by');",
+              "        pm.expect(log).to.have.property('confidence_score');",
+              "        pm.expect(log).to.have.property('created_at');",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
         }
       ],
-      "description": "API health and information endpoints"
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/bank/logs/?limit=50&ordering=-created_at",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "bank", "logs", ""],
+          "query": [
+            {
+              "key": "limit",
+              "value": "50",
+              "description": "Number of results to return"
+            },
+            {
+              "key": "ordering",
+              "value": "-created_at",
+              "description": "Order by creation date (newest first)"
+            }
+          ]
+        },
+        "description": "View reconciliation logs and audit trail"
+      }
+    },
+    {
+      "name": "5. Generate Summary Report",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Request accepted', function () {",
+              "    pm.response.to.have.status(202);",
+              "});",
+              "",
+              "pm.test('Response contains task information', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('task_id');",
+              "    pm.expect(responseJson).to.have.property('message');",
+              "    ",
+              "    // Store task ID for checking status",
+              "    pm.globals.set('report_task_id', responseJson.task_id);",
+              "    pm.globals.set('summary_id', responseJson.summary_id);",
+              "});",
+              "",
+              "pm.test('Message indicates report generation started', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson.message).to.include('report generation started');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"format\": \"pdf\",\n    \"start_date\": \"2024-01-01\",\n    \"end_date\": \"2024-12-31\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/bank/summary/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "bank", "summary", ""]
+        },
+        "description": "Generate reconciliation summary report in PDF or Excel format"
+      }
     }
   ]
 }

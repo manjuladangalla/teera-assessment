@@ -1,2 +1,2 @@
 filename,original_filename,file_size,status,total_records,processed_records,failed_records
-sample_bank_transactions.csv,sample_bank_transactions.csv,5259,uploaded,48,0,0
+sample_bank_transactions.csv,sample_bank_transactions.csv,6890,uploaded,64,0,0

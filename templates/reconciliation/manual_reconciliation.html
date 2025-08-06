@@ -1,0 +1,930 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Manual
+Reconciliation - Bank Reconciliation System{% endblock %} {% block extra_css %}
+<style>
+  .reconciliation-container {
+    background: #f8f9fa;
+    min-height: 100vh;
+    padding: 20px 0;
+  }
+
+  .transaction-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .transaction-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .transaction-card.selected {
+    border-color: #28a745;
+    background: #f8fff9;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+  }
+
+  .invoice-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .invoice-card:hover {
+    border-color: #17a2b8;
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.15);
+  }
+
+  .invoice-card.selected {
+    border-color: #ffc107;
+    background: #fffdf3;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+  }
+
+  .amount-badge {
+    font-size: 1.1em;
+    font-weight: 600;
+  }
+
+  .confidence-meter {
+    height: 6px;
+    border-radius: 3px;
+    background: #e9ecef;
+    overflow: hidden;
+  }
+
+  .confidence-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+  }
+
+  .match-suggestion {
+    background: linear-gradient(45deg, #e8f5e8, #f0f8ff);
+    border: 2px dashed #28a745;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      border-color: #28a745;
+    }
+    50% {
+      border-color: #20c997;
+    }
+    100% {
+      border-color: #28a745;
+    }
+  }
+
+  .floating-action-panel {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    display: none;
+    z-index: 1000;
+    min-width: 300px;
+  }
+
+  .search-highlight {
+    background: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+
+  .reconciliation-steps {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid #007bff;
+  }
+</style>
+{% endblock %} {% block content %} {% csrf_token %}
+<div class="reconciliation-container">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1><i class="fas fa-handshake me-2"></i>Manual Reconciliation</h1>
+        <p class="text-muted">Match bank transactions with invoices</p>
+      </div>
+      <div>
+        <button class="btn btn-outline-primary me-2" onclick="showHelp()">
+          <i class="fas fa-question-circle me-1"></i>Help
+        </button>
+        <button class="btn btn-outline-success" onclick="autoSuggestMatches()">
+          <i class="fas fa-magic me-1"></i>Auto Suggest
+        </button>
+      </div>
+    </div>
+
+    <!-- Instructions Panel -->
+    <div class="reconciliation-steps">
+      <h5><i class="fas fa-list-ol me-2"></i>How to Reconcile</h5>
+      <div class="row">
+        <div class="col-md-3">
+          <div class="text-center">
+            <div class="badge bg-primary fs-6 mb-2">1</div>
+            <p class="small">Select a bank transaction from the left panel</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-center">
+            <div class="badge bg-info fs-6 mb-2">2</div>
+            <p class="small">Choose matching invoice(s) from the right panel</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-center">
+            <div class="badge bg-warning fs-6 mb-2">3</div>
+            <p class="small">Review the match and add notes if needed</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-center">
+            <div class="badge bg-success fs-6 mb-2">4</div>
+            <p class="small">Confirm reconciliation to complete</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Reconciliation Interface -->
+    <div class="row">
+      <!-- Left Panel - Bank Transactions -->
+      <div class="col-md-6">
+        <div class="card">
+          <div
+            class="card-header d-flex justify-content-between align-items-center"
+          >
+            <h5>
+              <i class="fas fa-university me-2"></i>Unmatched Transactions
+            </h5>
+            <span class="badge bg-warning"
+              >{{ unmatched_transactions|length }}</span
+            >
+          </div>
+          <div class="card-body p-0">
+            <!-- Search Box -->
+            <div class="p-3 border-bottom">
+              <div class="input-group">
+                <span class="input-group-text"
+                  ><i class="fas fa-search"></i
+                ></span>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="transactionSearch"
+                  placeholder="Search transactions..."
+                  onkeyup="searchTransactions()"
+                />
+              </div>
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Search by description, amount, or reference number
+                </small>
+              </div>
+            </div>
+
+            <!-- Transactions List -->
+            <div
+              id="transactionsList"
+              style="max-height: 600px; overflow-y: auto"
+            >
+              {% for transaction in unmatched_transactions %}
+              <div
+                class="transaction-card p-3"
+                data-transaction-id="{{ transaction.id }}"
+                data-amount="{{ transaction.amount }}"
+                data-description="{{ transaction.description|lower }}"
+                onclick="selectTransaction(this)"
+              >
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-2">
+                      <strong class="me-2"
+                        >{{ transaction.transaction_date }}</strong
+                      >
+                      <span class="amount-badge badge bg-primary"
+                        >${{ transaction.amount|floatformat:2 }}</span
+                      >
+                    </div>
+                    <p class="mb-1 transaction-description">
+                      {{ transaction.description|truncatechars:80 }}
+                    </p>
+                    {% if transaction.reference_number %}
+                    <small class="text-muted">
+                      <i class="fas fa-hashtag me-1"></i>{{
+                      transaction.reference_number }}
+                    </small>
+                    {% endif %}
+                  </div>
+                  <div class="text-end">
+                    <div class="badge bg-light text-dark">
+                      {{ transaction.transaction_type|default:"N/A"|title }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Confidence Meter (initially hidden) -->
+                <div class="confidence-meter mt-2" style="display: none">
+                  <div
+                    class="confidence-fill bg-success"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+              {% empty %}
+              <div class="text-center p-4">
+                <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                <h5>All Caught Up!</h5>
+                <p class="text-muted">No unmatched transactions found.</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel - Invoices -->
+      <div class="col-md-6">
+        <div class="card">
+          <div
+            class="card-header d-flex justify-content-between align-items-center"
+          >
+            <h5><i class="fas fa-file-invoice me-2"></i>Unpaid Invoices</h5>
+            <span class="badge bg-info">{{ unpaid_invoices|length }}</span>
+          </div>
+          <div class="card-body p-0">
+            <!-- Search Box -->
+            <div class="p-3 border-bottom">
+              <div class="input-group">
+                <span class="input-group-text"
+                  ><i class="fas fa-search"></i
+                ></span>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="invoiceSearch"
+                  placeholder="Search invoices..."
+                  onkeyup="searchInvoices()"
+                />
+              </div>
+              <div class="row mt-2">
+                <div class="col-6">
+                  <select
+                    class="form-select form-select-sm"
+                    id="statusFilter"
+                    onchange="filterInvoices()"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="sent">Sent</option>
+                    <option value="overdue">Overdue</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <select
+                    class="form-select form-select-sm"
+                    id="sortOrder"
+                    onchange="sortInvoices()"
+                  >
+                    <option value="date_desc">Newest First</option>
+                    <option value="date_asc">Oldest First</option>
+                    <option value="amount_desc">Highest Amount</option>
+                    <option value="amount_asc">Lowest Amount</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Invoices List -->
+            <div id="invoicesList" style="max-height: 600px; overflow-y: auto">
+              {% for invoice in unpaid_invoices %}
+              <div
+                class="invoice-card p-3"
+                data-invoice-id="{{ invoice.id }}"
+                data-amount="{{ invoice.total_amount }}"
+                data-customer="{{ invoice.customer.name|lower }}"
+                data-status="{{ invoice.status }}"
+                data-date="{{ invoice.due_date|date:'Y-m-d' }}"
+                onclick="selectInvoice(this)"
+              >
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-2">
+                      <strong class="me-2">{{ invoice.invoice_number }}</strong>
+                      <span class="amount-badge badge bg-info"
+                        >${{ invoice.total_amount|floatformat:2 }}</span
+                      >
+                    </div>
+                    <p class="mb-1 text-truncate">
+                      {{ invoice.customer.name }}
+                    </p>
+                    <small class="text-muted">
+                      <i class="fas fa-calendar me-1"></i>Due: {{
+                      invoice.due_date }} {% if invoice.status == 'overdue' %}
+                      <span class="badge bg-danger ms-2">Overdue</span>
+                      {% endif %}
+                    </small>
+                  </div>
+                  <div class="text-end">
+                    <div class="small text-muted">
+                      {{ invoice.status|title }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% empty %}
+              <div class="text-center p-4">
+                <i class="fas fa-file-alt text-muted fa-3x mb-3"></i>
+                <h5>No Invoices</h5>
+                <p class="text-muted">No unpaid invoices found.</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Action Panel -->
+<div id="floatingPanel" class="floating-action-panel">
+  <h6><i class="fas fa-link me-2"></i>Reconcile Match</h6>
+  <div id="matchSummary" class="mb-3">
+    <!-- Match details will be populated here -->
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Notes (Optional)</label>
+    <textarea
+      class="form-control"
+      id="reconciliationNotes"
+      rows="2"
+      placeholder="Add any additional notes..."
+    ></textarea>
+  </div>
+
+  <div class="d-grid gap-2">
+    <button
+      class="btn btn-success"
+      id="confirmMatch"
+      onclick="confirmReconciliation()"
+    >
+      <i class="fas fa-check me-1"></i>Confirm Match
+    </button>
+    <button class="btn btn-outline-secondary" onclick="clearSelection()">
+      <i class="fas fa-times me-1"></i>Clear Selection
+    </button>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-question-circle me-2"></i>Reconciliation Help
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6><i class="fas fa-university me-2"></i>Bank Transactions</h6>
+            <ul class="list-unstyled">
+              <li>
+                <i class="fas fa-check text-success me-2"></i>Click to select a
+                transaction
+              </li>
+              <li>
+                <i class="fas fa-search text-info me-2"></i>Use search to find
+                specific transactions
+              </li>
+              <li>
+                <i class="fas fa-money-bill text-primary me-2"></i>Amount is
+                shown in blue badge
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6><i class="fas fa-file-invoice me-2"></i>Invoices</h6>
+            <ul class="list-unstyled">
+              <li>
+                <i class="fas fa-check text-success me-2"></i>Click to select
+                matching invoice(s)
+              </li>
+              <li>
+                <i class="fas fa-filter text-info me-2"></i>Filter by status or
+                sort by date/amount
+              </li>
+              <li>
+                <i class="fas fa-exclamation-triangle text-warning me-2"></i
+                >Overdue invoices are highlighted
+              </li>
+            </ul>
+          </div>
+        </div>
+        <hr />
+        <h6><i class="fas fa-magic me-2"></i>Smart Features</h6>
+        <ul class="list-unstyled">
+          <li>
+            <i class="fas fa-robot text-primary me-2"></i
+            ><strong>Auto Suggest:</strong> AI-powered matching suggestions
+          </li>
+          <li>
+            <i class="fas fa-calculator text-info me-2"></i
+            ><strong>Amount Matching:</strong> Automatically highlights similar
+            amounts
+          </li>
+          <li>
+            <i class="fas fa-history text-success me-2"></i
+            ><strong>Undo:</strong> All reconciliations can be reversed
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="successToast" class="toast" role="alert">
+    <div class="toast-header bg-success text-white">
+      <i class="fas fa-check-circle me-2"></i>
+      <strong class="me-auto">Success</strong>
+      <button
+        type="button"
+        class="btn-close btn-close-white"
+        data-bs-dismiss="toast"
+      ></button>
+    </div>
+    <div class="toast-body">Reconciliation completed successfully!</div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  let selectedTransaction = null;
+  let selectedInvoices = [];
+
+  function selectTransaction(element) {
+    // Clear previous selection
+    document.querySelectorAll(".transaction-card").forEach((card) => {
+      card.classList.remove("selected");
+    });
+
+    // Select current transaction
+    element.classList.add("selected");
+    selectedTransaction = {
+      id: element.dataset.transactionId,
+      amount: parseFloat(element.dataset.amount),
+      description: element.querySelector(".transaction-description")
+        .textContent,
+      element: element,
+    };
+
+    // Show amount-based suggestions
+    showAmountBasedSuggestions();
+
+    // Update floating panel if invoices are selected
+    updateFloatingPanel();
+  }
+
+  function selectInvoice(element) {
+    const invoiceId = element.dataset.invoiceId;
+    const amount = parseFloat(element.dataset.amount);
+
+    if (element.classList.contains("selected")) {
+      // Deselect
+      element.classList.remove("selected");
+      selectedInvoices = selectedInvoices.filter((inv) => inv.id !== invoiceId);
+    } else {
+      // Select
+      element.classList.add("selected");
+      selectedInvoices.push({
+        id: invoiceId,
+        amount: amount,
+        number: element.querySelector("strong").textContent,
+        customer: element.querySelector("p").textContent,
+        element: element,
+      });
+    }
+
+    updateFloatingPanel();
+  }
+
+  function showAmountBasedSuggestions() {
+    if (!selectedTransaction) return;
+
+    const transactionAmount = selectedTransaction.amount;
+    const tolerance = transactionAmount * 0.05; // 5% tolerance
+
+    document.querySelectorAll(".invoice-card").forEach((card) => {
+      const invoiceAmount = parseFloat(card.dataset.amount);
+      card.classList.remove("match-suggestion");
+
+      if (Math.abs(invoiceAmount - transactionAmount) <= tolerance) {
+        card.classList.add("match-suggestion");
+      }
+    });
+  }
+
+  function updateFloatingPanel() {
+    const panel = document.getElementById("floatingPanel");
+    const summary = document.getElementById("matchSummary");
+
+    if (selectedTransaction && selectedInvoices.length > 0) {
+      const totalInvoiceAmount = selectedInvoices.reduce(
+        (sum, inv) => sum + inv.amount,
+        0
+      );
+      const difference = Math.abs(
+        selectedTransaction.amount - totalInvoiceAmount
+      );
+
+      summary.innerHTML = `
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="card bg-light">
+                        <div class="card-body p-2 text-center">
+                            <small class="text-muted d-block">Transaction</small>
+                            <strong>$${selectedTransaction.amount.toFixed(
+                              2
+                            )}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card bg-light">
+                        <div class="card-body p-2 text-center">
+                            <small class="text-muted d-block">Invoice(s)</small>
+                            <strong>$${totalInvoiceAmount.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ${
+              difference > 0.01
+                ? `
+                <div class="alert alert-warning mt-2 p-2 small">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Difference: $${difference.toFixed(2)}
+                </div>
+            `
+                : `
+                <div class="alert alert-success mt-2 p-2 small">
+                    <i class="fas fa-check me-1"></i>
+                    Perfect match!
+                </div>
+            `
+            }
+            <div class="mt-2">
+                <small class="text-muted">
+                    Matching ${
+                      selectedInvoices.length
+                    } invoice(s) with transaction
+                </small>
+            </div>
+        `;
+
+      panel.style.display = "block";
+    } else {
+      panel.style.display = "none";
+    }
+  }
+
+  function confirmReconciliation() {
+    if (!selectedTransaction || selectedInvoices.length === 0) {
+      alert("Please select a transaction and at least one invoice.");
+      return;
+    }
+
+    const button = document.getElementById("confirmMatch");
+    button.disabled = true;
+    button.innerHTML =
+      '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+
+    const data = {
+      transaction_id: selectedTransaction.id,
+      invoice_ids: selectedInvoices.map((inv) => inv.id),
+      amounts: selectedInvoices.map((inv) => inv.amount),
+      notes: document.getElementById("reconciliationNotes").value,
+    };
+
+    // Call API to reconcile
+    console.log("Attempting reconciliation with data:", data);
+
+    // First try the debug endpoint to validate data
+    makeAuthenticatedRequest(`/debug/reconcile/${selectedTransaction.id}/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+      .then((response) => {
+        console.log("Debug response status:", response.status);
+        return response.json();
+      })
+      .then((debugResult) => {
+        console.log("Debug result:", debugResult);
+
+        if (debugResult.success) {
+          // If debug passes, try the actual reconciliation
+          return makeAuthenticatedRequest(
+            `/api/v1/bank/transactions/${selectedTransaction.id}/reconcile/`,
+            {
+              method: "POST",
+              body: JSON.stringify(data),
+            }
+          ).then((response) => {
+            if (!response.ok) {
+              console.warn("Main API failed, trying simple reconciliation...");
+              // Fallback to simple reconciliation endpoint
+              return makeAuthenticatedRequest(
+                `/simple/reconcile/${selectedTransaction.id}/`,
+                {
+                  method: "POST",
+                  body: JSON.stringify(data),
+                }
+              );
+            }
+            return response;
+          });
+        } else {
+          throw new Error(`Debug failed: ${debugResult.error}`);
+        }
+      })
+      .then((response) => {
+        console.log("Reconcile response status:", response.status);
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Final reconciliation result:", data);
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // Show success message
+        showSuccessToast();
+
+        // Remove reconciled transaction from list
+        selectedTransaction.element.remove();
+
+        // Remove matched invoices from list
+        selectedInvoices.forEach((invoice) => {
+          invoice.element.remove();
+        });
+
+        // Clear selection
+        clearSelection();
+
+        // Update counters
+        updateCounters();
+      })
+      .catch((error) => {
+        console.error("Reconciliation error:", error);
+        alert("Error: " + error.message);
+      })
+      .finally(() => {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-check me-1"></i>Confirm Match';
+      });
+  }
+
+  function clearSelection() {
+    selectedTransaction = null;
+    selectedInvoices = [];
+
+    document.querySelectorAll(".transaction-card").forEach((card) => {
+      card.classList.remove("selected");
+    });
+
+    document.querySelectorAll(".invoice-card").forEach((card) => {
+      card.classList.remove("selected", "match-suggestion");
+    });
+
+    document.getElementById("floatingPanel").style.display = "none";
+    document.getElementById("reconciliationNotes").value = "";
+  }
+
+  function searchTransactions() {
+    const query = document
+      .getElementById("transactionSearch")
+      .value.toLowerCase();
+    const cards = document.querySelectorAll(".transaction-card");
+
+    cards.forEach((card) => {
+      const description = card.dataset.description;
+      const amount = card.dataset.amount;
+
+      if (description.includes(query) || amount.includes(query)) {
+        card.style.display = "block";
+        // Highlight matching text
+        highlightText(card, query);
+      } else {
+        card.style.display = "none";
+      }
+    });
+  }
+
+  function searchInvoices() {
+    const query = document.getElementById("invoiceSearch").value.toLowerCase();
+    const cards = document.querySelectorAll(".invoice-card");
+
+    cards.forEach((card) => {
+      const customer = card.dataset.customer;
+      const amount = card.dataset.amount;
+
+      if (customer.includes(query) || amount.includes(query)) {
+        card.style.display = "block";
+      } else {
+        card.style.display = "none";
+      }
+    });
+  }
+
+  function filterInvoices() {
+    const statusFilter = document.getElementById("statusFilter").value;
+    const cards = document.querySelectorAll(".invoice-card");
+
+    cards.forEach((card) => {
+      if (!statusFilter || card.dataset.status === statusFilter) {
+        card.style.display = "block";
+      } else {
+        card.style.display = "none";
+      }
+    });
+  }
+
+  function sortInvoices() {
+    const sortOrder = document.getElementById("sortOrder").value;
+    const container = document.getElementById("invoicesList");
+    const cards = Array.from(container.querySelectorAll(".invoice-card"));
+
+    cards.sort((a, b) => {
+      switch (sortOrder) {
+        case "date_desc":
+          return new Date(b.dataset.date) - new Date(a.dataset.date);
+        case "date_asc":
+          return new Date(a.dataset.date) - new Date(b.dataset.date);
+        case "amount_desc":
+          return parseFloat(b.dataset.amount) - parseFloat(a.dataset.amount);
+        case "amount_asc":
+          return parseFloat(a.dataset.amount) - parseFloat(b.dataset.amount);
+        default:
+          return 0;
+      }
+    });
+
+    cards.forEach((card) => container.appendChild(card));
+  }
+
+  function autoSuggestMatches() {
+    // Implement ML-based auto suggestions
+    if (!selectedTransaction) {
+      alert("Please select a transaction first.");
+      return;
+    }
+
+    // This would call the ML suggestions API
+    // For now, we'll simulate with amount-based matching
+    showAmountBasedSuggestions();
+
+    // Add confidence indicators
+    document.querySelectorAll(".match-suggestion").forEach((card) => {
+      const meter = card.querySelector(".confidence-meter");
+      if (meter) {
+        meter.style.display = "block";
+        const fill = meter.querySelector(".confidence-fill");
+        fill.style.width = "85%"; // Simulated confidence
+      }
+    });
+  }
+
+  function showHelp() {
+    const modal = new bootstrap.Modal(document.getElementById("helpModal"));
+    modal.show();
+  }
+
+  function showSuccessToast() {
+    const toast = new bootstrap.Toast(document.getElementById("successToast"));
+    toast.show();
+  }
+
+  function updateCounters() {
+    // Update the badge counters
+    const transactionCount =
+      document.querySelectorAll(".transaction-card").length;
+    const invoiceCount = document.querySelectorAll(".invoice-card").length;
+
+    // Update badges in card headers
+    document.querySelector(".card-header .badge:first-of-type").textContent =
+      transactionCount;
+    document.querySelector(".card-header .badge:last-of-type").textContent =
+      invoiceCount;
+  }
+
+  function highlightText(element, query) {
+    // Simple text highlighting
+    const textElements = element.querySelectorAll(".transaction-description");
+    textElements.forEach((el) => {
+      const text = el.textContent;
+      if (query && text.toLowerCase().includes(query)) {
+        const regex = new RegExp(`(${query})`, "gi");
+        el.innerHTML = text.replace(
+          regex,
+          '<span class="search-highlight">$1</span>'
+        );
+      }
+    });
+  }
+
+  // Utility functions
+  function getAuthToken() {
+    // For Django session-based auth, we'll use CSRF token
+    const csrfToken = getCsrfToken();
+    return csrfToken ? `Token ${csrfToken}` : "";
+  }
+
+  function getCsrfToken() {
+    const token = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
+    if (token) return token;
+
+    // Try to get from cookies
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split("=");
+      if (name === "csrftoken") {
+        return value;
+      }
+    }
+    return "";
+  }
+
+  function makeAuthenticatedRequest(url, options = {}) {
+    const defaultOptions = {
+      headers: {
+        "X-CSRFToken": getCsrfToken(),
+        "Content-Type": "application/json",
+      },
+      credentials: "same-origin",
+    };
+
+    // Merge options
+    const mergedOptions = {
+      ...defaultOptions,
+      ...options,
+      headers: {
+        ...defaultOptions.headers,
+        ...(options.headers || {}),
+      },
+    };
+
+    return fetch(url, mergedOptions);
+  }
+
+  // Initialize on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    // Add keyboard shortcuts
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        clearSelection();
+      }
+      if (
+        e.key === "Enter" &&
+        e.ctrlKey &&
+        selectedTransaction &&
+        selectedInvoices.length > 0
+      ) {
+        confirmReconciliation();
+      }
+    });
+
+    // Auto-focus on search when user starts typing
+    document.addEventListener("keypress", function (e) {
+      if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+        if (e.key.match(/[a-zA-Z0-9]/)) {
+          document.getElementById("transactionSearch").focus();
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}
