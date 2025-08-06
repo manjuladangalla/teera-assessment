@@ -1,17 +1,15 @@
 from rest_framework import serializers
 from core.models import Company, Customer, Invoice
 
-
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = ['id', 'name', 'industry', 'contact_email', 'is_active', 'created_at']
         read_only_fields = ['id', 'created_at']
 
-
 class CustomerSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='company.name', read_only=True)
-    
+
     class Meta:
         model = Customer
         fields = [
@@ -20,11 +18,10 @@ class CustomerSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at']
 
-
 class InvoiceSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer.name', read_only=True)
     company_name = serializers.CharField(source='customer.company.name', read_only=True)
-    
+
     class Meta:
         model = Invoice
         fields = [

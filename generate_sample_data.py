@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-"""
-Generate sample invoice and bank transaction data in Excel format
-for testing the bank reconciliation system.
-Compatible with Django models.
-"""
+
 import pandas as pd
 from datetime import datetime, timedelta
 import random
@@ -12,12 +7,9 @@ from decimal import Decimal
 import os
 
 def generate_sample_data():
-    """Generate comprehensive sample data for testing."""
-    
-    # Create sample_data directory if it doesn't exist
+
     os.makedirs('/Users/mdangallage/teera-assessment/sample_data', exist_ok=True)
-    
-    # Sample customers (these will be linked to your company in the database)
+
     customers = [
         {
             'name': 'Acme Corporation',
@@ -92,8 +84,7 @@ def generate_sample_data():
             'payment_delay_days': 20
         }
     ]
-    
-    # Service types for invoice descriptions
+
     services = [
         'Software License Renewal',
         'Web Development Services',
@@ -116,17 +107,15 @@ def generate_sample_data():
         'Database Optimization',
         'API Development Services'
     ]
-    
-    # Generate invoices and customers data for the last 3 months
+
     invoices = []
-    customers_data = []  # For CSV export
+    customers_data = []
     bank_transactions = []
     start_date = datetime(2025, 6, 1)
     current_balance = 100000.00
-    
+
     invoice_counter = 1
-    
-    # First, create the customers data for CSV export
+
     for customer in customers:
         customers_data.append({
             'customer_code': customer['customer_code'],
@@ -136,36 +125,31 @@ def generate_sample_data():
             'address': customer['address'],
             'is_active': True
         })
-    
-    for week in range(12):  # 12 weeks of data
+
+    for week in range(12):
         week_start = start_date + timedelta(weeks=week)
-        
-        # Generate 3-8 invoices per week
+
         for _ in range(random.randint(3, 8)):
             customer = random.choice(customers)
             service = random.choice(services)
-            
-            # Invoice details
+
             invoice_date = week_start + timedelta(days=random.randint(0, 6))
             due_date = invoice_date + timedelta(days=30)
-            
-            # Generate realistic amounts
+
             base_amount = random.uniform(*customer['typical_amount_range'])
             base_amount = round(base_amount, 2)
-            tax_rate = 0.15  # 15% tax
+            tax_rate = 0.15
             tax_amount = round(base_amount * tax_rate, 2)
             total_amount = base_amount + tax_amount
-            
+
             invoice_number = f"INV-2025-{invoice_counter:03d}"
             reference_number = f"REF-{customer['customer_code']}-{invoice_counter:03d}"
-            
-            # Determine invoice status (85% paid, 15% pending)
-            # Note: Using 'paid' status instead of 'sent' as per Django model choices
+
             status = 'paid' if random.random() < 0.85 else 'sent'
-            
+
             invoice = {
                 'invoice_number': invoice_number,
-                'customer_code': customer['customer_code'],  # Link to customer
+                'customer_code': customer['customer_code'],
                 'customer_name': customer['name'],
                 'customer_email': customer['email'],
                 'amount_due': base_amount,
@@ -178,15 +162,13 @@ def generate_sample_data():
                 'reference_number': reference_number
             }
             invoices.append(invoice)
-            
-            # Generate corresponding bank transaction if paid
+
             if status == 'paid':
                 payment_date = invoice_date + timedelta(days=customer['payment_delay_days'])
-                payment_date += timedelta(days=random.randint(-5, 10))  # Add some variance
-                
+                payment_date += timedelta(days=random.randint(-5, 10))
+
                 current_balance += total_amount
-                
-                # Add some variance to payment descriptions for testing matching
+
                 description_variants = [
                     f"Payment from {customer['name']} - {service[:20]}",
                     f"Transfer from {customer['name']}",
@@ -194,21 +176,20 @@ def generate_sample_data():
                     f"Wire from {customer['name'][:15]} - {reference_number}",
                     f"ACH Credit - {customer['name']}"
                 ]
-                
+
                 transaction = {
                     'transaction_date': payment_date.strftime('%Y-%m-%d'),
                     'description': random.choice(description_variants),
                     'amount': total_amount,
-                    'reference_number': reference_number if random.random() < 0.8 else '',  # 80% have ref numbers
+                    'reference_number': reference_number if random.random() < 0.8 else '',
                     'bank_reference': f"BK-{payment_date.strftime('%Y-%m%d')}-{invoice_counter:03d}",
                     'transaction_type': 'credit',
                     'balance': round(current_balance, 2)
                 }
                 bank_transactions.append(transaction)
-            
+
             invoice_counter += 1
-    
-    # Add some additional bank transactions (fees, interest, unknown deposits)
+
     additional_transactions = [
         {
             'transaction_date': '2025-07-01',
@@ -256,37 +237,30 @@ def generate_sample_data():
             'balance': current_balance + 790.50
         }
     ]
-    
+
     bank_transactions.extend(additional_transactions)
-    
-    # Sort transactions by date
+
     bank_transactions.sort(key=lambda x: x['transaction_date'])
-    
+
     return invoices, bank_transactions, customers_data
 
 def create_excel_file():
-    """Create Excel file with sample data compatible with Django models."""
     print("Generating sample invoice and bank transaction data...")
-    
+
     invoices, bank_transactions, customers_data = generate_sample_data()
-    
-    # Create Excel file with multiple sheets
+
     with pd.ExcelWriter('/Users/mdangallage/teera-assessment/sample_data/sample_reconciliation_data.xlsx', 
                        engine='openpyxl') as writer:
-        
-        # Customers sheet
+
         customers_df = pd.DataFrame(customers_data)
         customers_df.to_excel(writer, sheet_name='Customers', index=False)
-        
-        # Invoice sheet
+
         invoices_df = pd.DataFrame(invoices)
         invoices_df.to_excel(writer, sheet_name='Invoices', index=False)
-        
-        # Bank transactions sheet
+
         transactions_df = pd.DataFrame(bank_transactions)
         transactions_df.to_excel(writer, sheet_name='Bank_Transactions', index=False)
-        
-        # Summary sheet
+
         summary_data = {
             'Metric': [
                 'Total Customers',
@@ -313,21 +287,19 @@ def create_excel_file():
         }
         summary_df = pd.DataFrame(summary_data)
         summary_df.to_excel(writer, sheet_name='Summary', index=False)
-    
+
     print(f"✅ Created Excel file with {len(customers_data)} customers, {len(invoices)} invoices and {len(bank_transactions)} bank transactions")
     print(f"📊 File saved: /Users/mdangallage/teera-assessment/sample_data/sample_reconciliation_data.xlsx")
-    
-    # Also create individual CSV files for Django import
+
     customers_df.to_csv('/Users/mdangallage/teera-assessment/sample_data/sample_customers.csv', index=False)
     invoices_df.to_csv('/Users/mdangallage/teera-assessment/sample_data/sample_invoices.csv', index=False)
     transactions_df.to_csv('/Users/mdangallage/teera-assessment/sample_data/sample_bank_transactions.csv', index=False)
-    
+
     print("✅ Also created Django-compatible CSV files:")
     print("   - sample_customers.csv (for Customer model)")
     print("   - sample_invoices.csv (for Invoice model)")
     print("   - sample_bank_transactions.csv (for BankTransaction model)")
-    
-    # Create a file upload status record template
+
     file_upload_data = {
         'filename': 'sample_bank_transactions.csv',
         'original_filename': 'sample_bank_transactions.csv',
@@ -337,12 +309,12 @@ def create_excel_file():
         'processed_records': 0,
         'failed_records': 0
     }
-    
+
     file_upload_df = pd.DataFrame([file_upload_data])
     file_upload_df.to_csv('/Users/mdangallage/teera-assessment/sample_data/sample_file_upload_status.csv', index=False)
-    
+
     print("   - sample_file_upload_status.csv (for FileUploadStatus model)")
-    
+
     return len(customers_data), len(invoices), len(bank_transactions)
 
 if __name__ == "__main__":

@@ -3,16 +3,13 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from .models import Company, UserProfile, Customer, Invoice, AuditLog
 
-
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
     verbose_name_plural = 'Profile'
 
-
 class UserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline,)
-
 
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
@@ -21,14 +18,12 @@ class CompanyAdmin(admin.ModelAdmin):
     search_fields = ['name', 'contact_email', 'registration_number']
     readonly_fields = ['id', 'created_at', 'updated_at']
 
-
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ['name', 'company', 'email', 'customer_code', 'is_active']
     list_filter = ['company', 'is_active', 'created_at']
     search_fields = ['name', 'email', 'customer_code']
     readonly_fields = ['id', 'created_at', 'updated_at']
-
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
@@ -38,7 +33,6 @@ class InvoiceAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'created_at', 'updated_at']
     date_hierarchy = 'issue_date'
 
-
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
     list_display = ['action', 'model_name', 'user', 'company', 'created_at']
@@ -47,7 +41,5 @@ class AuditLogAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'created_at', 'updated_at']
     date_hierarchy = 'created_at'
 
-
-# Re-register UserAdmin
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)

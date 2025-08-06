@@ -4,10 +4,8 @@ from reconciliation.models import BankTransaction
 from decimal import Decimal
 from datetime import datetime, timedelta
 
-# Get admin user
 admin_user = User.objects.get(username='admin')
 
-# Create a demo company if it doesn't exist
 company, created = Company.objects.get_or_create(
     name='Demo Company Ltd',
     defaults={
@@ -18,7 +16,6 @@ company, created = Company.objects.get_or_create(
     }
 )
 
-# Create user profile if it doesn't exist
 profile, created = UserProfile.objects.get_or_create(
     user=admin_user,
     defaults={
@@ -32,7 +29,6 @@ profile, created = UserProfile.objects.get_or_create(
 print(f'Company: {company.name}')
 print(f'User Profile: {profile.user.username}')
 
-# Create sample customers
 customers = []
 customer_data = [
     {'name': 'ABC Corp', 'email': 'billing@abccorp.com', 'code': 'ABC001'},
@@ -53,13 +49,12 @@ for data in customer_data:
     customers.append(customer)
     print(f'Customer: {customer.name}')
 
-# Create sample invoices
 today = datetime.now().date()
 for i, customer in enumerate(customers):
     for j in range(3):
         invoice_num = f'INV-{customer.customer_code}-{j+1:03d}'
         amount = Decimal((i+1) * 1000 + (j+1) * 100)
-        
+
         invoice, created = Invoice.objects.get_or_create(
             customer=customer,
             invoice_number=invoice_num,
@@ -76,7 +71,6 @@ for i, customer in enumerate(customers):
         )
         print(f'Invoice: {invoice.invoice_number} - ${invoice.total_amount}')
 
-# Create sample bank transactions
 transactions_data = [
     {'amount': 1100.00, 'desc': 'Wire Transfer from ABC Corp', 'ref': 'INV-ABC001-001'},
     {'amount': 1210.00, 'desc': 'ACH Payment XYZ Industries', 'ref': 'INV-XYZ001-001'},
@@ -86,7 +80,6 @@ transactions_data = [
     {'amount': 1430.00, 'desc': 'Direct Deposit Tech Solutions', 'ref': 'INV-TECH001-002'},
 ]
 
-# Create a sample file upload record first
 from reconciliation.models import FileUploadStatus
 file_upload, created = FileUploadStatus.objects.get_or_create(
     filename='sample_bank_statement.csv',

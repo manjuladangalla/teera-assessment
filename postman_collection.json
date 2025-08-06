@@ -1,9 +1,10 @@
 {
   "info": {
-    "_postman_id": "bank-reconciliation-essential",
-    "name": "Bank Reconciliation System - Essential APIs",
-    "description": "Essential endpoints for bank reconciliation system with JWT authentication",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "_postman_id": "bank-reconciliation-complete",
+    "name": "Bank Reconciliation System - Complete API Collection",
+    "description": "Complete collection of endpoints for the bank reconciliation system with JWT authentication, background tasks via Redis/Celery, and ML-powered matching",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
   },
   "auth": {
     "type": "bearer",
@@ -62,6 +63,16 @@
     {
       "key": "base_url",
       "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "demo",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "demo123",
       "type": "string"
     }
   ],
@@ -123,6 +134,106 @@
             },
             "description": "Get JWT access and refresh tokens for authentication"
           }
+        },
+        {
+          "name": "Refresh JWT Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Token refresh successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('New access token received', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('access');",
+                  "    ",
+                  "    // Update stored token",
+                  "    pm.globals.set('access_token', responseJson.access);",
+                  "    pm.globals.set('token_expires', Date.now() + 3600000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/token/refresh/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "token", "refresh", ""]
+            },
+            "description": "Refresh JWT access token using refresh token"
+          }
+        },
+        {
+          "name": "Verify JWT Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Token verification successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Token is valid', function () {",
+                  "    // 200 status means token is valid",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"token\": \"{{access_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/token/verify/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "token", "verify", ""]
+            },
+            "description": "Verify that JWT access token is valid"
+          }
         }
       ],
       "description": "Authentication endpoints for JWT tokens"
@@ -161,16 +272,10 @@
           "listen": "prerequest",
           "script": {
             "exec": [
-              "// Create sample CSV content for testing",
-              "const sampleCSV = 'date,description,amount,type\\n' +",
-              "    '2024-01-15,Office Supplies Purchase,150.00,debit\\n' +",
-              "    '2024-01-16,Client Payment Received,2500.00,credit\\n' +",
-              "    '2024-01-17,Utility Bill Payment,-75.50,debit\\n' +",
-              "    '2024-01-18,Software License Fee,-299.99,debit\\n' +",
-              "    '2024-01-19,Freelancer Payment,1200.00,credit';",
-              "",
-              "// Note: In actual use, you'll upload a real CSV file",
-              "console.log('Sample CSV ready for upload test');"
+              "// Note: Upload a real CSV file with bank transactions",
+              "// Expected format: date,description,amount,type",
+              "// Example: 2024-01-15,Office Supplies,150.00,debit",
+              "console.log('Ready to upload bank statement CSV file');"
             ],
             "type": "text/javascript"
           }
@@ -192,6 +297,12 @@
               "type": "file",
               "src": [],
               "description": "CSV file containing bank transactions"
+            },
+            {
+              "key": "file_type",
+              "value": "bank_statement",
+              "type": "text",
+              "description": "Type of file being uploaded"
             }
           ]
         },
@@ -200,7 +311,7 @@
           "host": ["{{base_url}}"],
           "path": ["api", "v1", "bank", "upload", ""]
         },
-        "description": "Upload a CSV file containing bank transactions for processing"
+        "description": "Upload a CSV file containing bank transactions for processing. The file will be processed in the background by Celery workers."
       }
     },
     {
@@ -418,22 +529,24 @@
           "script": {
             "exec": [
               "pm.test('Request accepted', function () {",
-              "    pm.response.to.have.status(202);",
+              "    pm.response.to.have.status(201);",
               "});",
               "",
               "pm.test('Response contains task information', function () {",
               "    const responseJson = pm.response.json();",
-              "    pm.expect(responseJson).to.have.property('task_id');",
+              "    pm.expect(responseJson).to.have.property('summary_id');",
               "    pm.expect(responseJson).to.have.property('message');",
               "    ",
-              "    // Store task ID for checking status",
-              "    pm.globals.set('report_task_id', responseJson.task_id);",
+              "    // Store summary ID for checking status",
+              "    if (responseJson.task_id) {",
+              "        pm.globals.set('report_task_id', responseJson.task_id);",
+              "    }",
               "    pm.globals.set('summary_id', responseJson.summary_id);",
               "});",
               "",
-              "pm.test('Message indicates report generation started', function () {",
+              "pm.test('Message indicates report generation', function () {",
               "    const responseJson = pm.response.json();",
-              "    pm.expect(responseJson.message).to.include('report generation started');",
+              "    pm.expect(responseJson.message).to.include('report');",
               "});"
             ],
             "type": "text/javascript"
@@ -454,7 +567,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n    \"format\": \"pdf\",\n    \"start_date\": \"2024-01-01\",\n    \"end_date\": \"2024-12-31\"\n}",
+          "raw": "{\n    \"format_type\": \"minimal\",\n    \"start_date\": \"2024-01-01\",\n    \"end_date\": \"2024-12-31\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -466,7 +579,7 @@
           "host": ["{{base_url}}"],
           "path": ["api", "v1", "bank", "summary", ""]
         },
-        "description": "Generate reconciliation summary report in PDF or Excel format"
+        "description": "Generate reconciliation summary report. Uses Celery background tasks when Redis is available, or returns immediate response when not."
       }
     }
   ]

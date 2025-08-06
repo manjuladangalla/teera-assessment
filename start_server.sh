@@ -1,16 +1,22 @@
 #!/bin/bash
 
-# Bank Reconciliation System - Decho ""
-echo "📋 Step 1: Installing Dependencies"
-echo "================================="lopment Server Startup Script
-# Enhanced with Deep Learningecho "📍 Server Endpoints:"
-echo "  🌐 Main Application: http://localhost:$SERVER_PORT"
-echo "  📚 API Documentation: http://localhost:$SERVER_PORT/api/docs/"
-echo "  🔧 Admin Interface: http://localhost:$SERVER_PORT/admin/"capabilities
+# Bank Reconciliation System - Development Server Startup Script
+# Enhanced with Deep Learning capabilities
 
 set -e  # Exit on any error
 
-echo "🏦 Starting Bank Reconciliation System with ML..."
+echo "🏦 Starting Bank Reconciliation Sprint_status "Django development server with ML capabilities starting..."
+echo ""
+echo "📍 Server Endpoints:"
+echo "  🌐 Main Application: http://localhost:$SERVER_PORT"
+echo "  📚 API Documentation: http://localhost:$SERVER_PORT/api/docs/"
+echo "  🔧 Admin Interface: http://localhost:$SERVER_PORT/admin/"
+echo ""
+echo "🤖 ML-Powered API Endpoints:"
+echo "  GET  /api/v1/bank/transactions/{id}/ml_suggestions/"
+echo "  POST /api/v1/bank/transactions/trigger_ml_matching/"
+echo "  GET  /api/v1/ml/performance/"
+echo "  POST /api/v1/ml/retrain/"L..."
 echo "=============================================="
 
 # Colors for output

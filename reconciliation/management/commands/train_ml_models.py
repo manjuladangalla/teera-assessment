@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from core.models import Company
 from reconciliation.ml_matching import MLMatchingEngine
 
-
 class Command(BaseCommand):
     help = 'Train ML models for all companies'
 
@@ -28,11 +27,11 @@ class Command(BaseCommand):
 
         for company in companies:
             self.stdout.write(f'Training ML model for {company.name}...')
-            
+
             try:
                 ml_engine = MLMatchingEngine(company)
                 model_version = ml_engine.train_model()
-                
+
                 self.stdout.write(
                     self.style.SUCCESS(
                         f'Successfully trained model {model_version.version} for {company.name}'
@@ -42,7 +41,7 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.ERROR(f'Failed to train model for {company.name}: {e}')
                 )
-        
+
         self.stdout.write(
             self.style.SUCCESS('ML model training completed')
         )

@@ -4,7 +4,6 @@ from rest_framework import viewsets, permissions
 from .models import Company, Customer, Invoice
 from .serializers import CompanySerializer, CustomerSerializer, InvoiceSerializer
 
-# Basic viewsets for core models
 class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
@@ -13,7 +12,7 @@ class CompanyViewSet(viewsets.ReadOnlyModelViewSet):
 class CustomerViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         user_company = self.request.user.profile.company
         return Customer.objects.filter(company=user_company)
@@ -21,12 +20,11 @@ class CustomerViewSet(viewsets.ModelViewSet):
 class InvoiceViewSet(viewsets.ModelViewSet):
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         user_company = self.request.user.profile.company
         return Invoice.objects.filter(customer__company=user_company)
 
-# Create router and register viewsets
 router = DefaultRouter()
 router.register(r'companies', CompanyViewSet)
 router.register(r'customers', CustomerViewSet, basename='customer')

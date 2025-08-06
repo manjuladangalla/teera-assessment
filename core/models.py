@@ -3,18 +3,14 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 import uuid
 
-
 class TimestampedModel(models.Model):
-    """Abstract base model with timestamp fields."""
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         abstract = True
 
-
 class Company(TimestampedModel):
-    """Company model for multi-tenant architecture."""
     INDUSTRY_CHOICES = [
         ('tech', 'Technology'),
         ('finance', 'Finance'),
@@ -23,40 +19,36 @@ class Company(TimestampedModel):
         ('manufacturing', 'Manufacturing'),
         ('other', 'Other'),
     ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)
     industry = models.CharField(max_length=50, choices=INDUSTRY_CHOICES, default='other')
     registration_number = models.CharField(max_length=100, blank=True, null=True)
     contact_email = models.EmailField()
     is_active = models.BooleanField(default=True)
-    
+
     class Meta:
         verbose_name_plural = "Companies"
         db_table = 'core_company'
-    
+
     def __str__(self):
         return self.name
 
-
 class UserProfile(TimestampedModel):
-    """Extended user profile linked to company."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='users')
     employee_id = models.CharField(max_length=50, blank=True, null=True)
     department = models.CharField(max_length=100, blank=True, null=True)
     is_admin = models.BooleanField(default=False)
-    
+
     class Meta:
         unique_together = ['user', 'company']
         db_table = 'core_userprofile'
-    
+
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.company.name}"
 
-
 class Customer(TimestampedModel):
-    """Customer model linked to company."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='customers')
     name = models.CharField(max_length=255)
@@ -65,17 +57,15 @@ class Customer(TimestampedModel):
     address = models.TextField(blank=True, null=True)
     customer_code = models.CharField(max_length=50, blank=True, null=True)
     is_active = models.BooleanField(default=True)
-    
+
     class Meta:
         unique_together = ['company', 'customer_code']
         db_table = 'core_customer'
-    
+
     def __str__(self):
         return f"{self.name} ({self.company.name})"
 
-
 class Invoice(TimestampedModel):
-    """Invoice model for tracking customer invoices."""
     STATUS_CHOICES = [
         ('draft', 'Draft'),
         ('sent', 'Sent'),
@@ -83,7 +73,7 @@ class Invoice(TimestampedModel):
         ('overdue', 'Overdue'),
         ('cancelled', 'Cancelled'),
     ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='invoices')
     invoice_number = models.CharField(max_length=100)
@@ -95,7 +85,7 @@ class Invoice(TimestampedModel):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     description = models.TextField(blank=True, null=True)
     reference_number = models.CharField(max_length=100, blank=True, null=True)
-    
+
     class Meta:
         unique_together = ['customer', 'invoice_number']
         db_table = 'core_invoice'
@@ -104,17 +94,15 @@ class Invoice(TimestampedModel):
             models.Index(fields=['invoice_number']),
             models.Index(fields=['due_date']),
         ]
-    
+
     def clean(self):
         if self.total_amount != self.amount_due + self.tax_amount:
             raise ValidationError('Total amount must equal amount due plus tax amount')
-    
+
     def __str__(self):
         return f"Invoice {self.invoice_number} - {self.customer.name}"
 
-
 class AuditLog(TimestampedModel):
-    """Generic audit log for tracking all system changes."""
     ACTION_CHOICES = [
         ('create', 'Create'),
         ('update', 'Update'),
@@ -122,7 +110,7 @@ class AuditLog(TimestampedModel):
         ('reconcile', 'Reconcile'),
         ('unreoncile', 'Unreconcile'),
     ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
@@ -132,7 +120,7 @@ class AuditLog(TimestampedModel):
     changes = models.JSONField(default=dict)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True, null=True)
-    
+
     class Meta:
         db_table = 'core_auditlog'
         indexes = [
@@ -140,6 +128,6 @@ class AuditLog(TimestampedModel):
             models.Index(fields=['user', 'action']),
             models.Index(fields=['model_name', 'object_id']),
         ]
-    
+
     def __str__(self):
         return f"{self.action} {self.model_name} by {self.user}"
