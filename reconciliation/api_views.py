@@ -641,11 +641,12 @@ class ReportViewSet(viewsets.ViewSet):
 
         company = request.user.profile.company
 
-        summary = ReconciliationSummary.objects.create(
+        # Use get_or_create to handle unique constraint gracefully
+        summary, created = ReconciliationSummary.objects.get_or_create(
             company=company,
             period_start=start_date,
             period_end=end_date,
-            generated_by=request.user
+            defaults={'generated_by': request.user}
         )
 
         try:
@@ -654,23 +655,33 @@ class ReportViewSet(viewsets.ViewSet):
                 format_type,
                 request.user.id
             )
+            message = f'{format_type.upper()} report generation started'
+            if not created:
+                message += ' (using existing summary)'
+            
             return Response(
                 {
                     'task_id': task.id,
                     'summary_id': str(summary.id),
-                'message': f'{format_type.upper()} report generation started'
-            },
-            status=status.HTTP_202_ACCEPTED
-        )
+                    'created': created,
+                    'message': message
+                },
+                status=status.HTTP_202_ACCEPTED
+            )
         except Exception as e:
             # If Redis/Celery is not available, return summary without background task
+            message = f'{format_type.upper()} report scheduled (task queue unavailable)'
+            if not created:
+                message += ' (using existing summary)'
+                
             return Response(
                 {
                     'summary_id': str(summary.id),
-                    'message': f'{format_type.upper()} report scheduled (task queue unavailable)',
+                    'created': created,
+                    'message': message,
                     'error': 'Background task system unavailable. Report creation may be delayed.'
                 },
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
             )
 
     @extend_schema(
