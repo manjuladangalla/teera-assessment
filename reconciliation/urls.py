@@ -1,4 +1,3 @@
-
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
@@ -30,6 +29,8 @@ urlpatterns = [
 
     path('bank/transactions/', AdvancedBankTransactionViewSet.as_view({'get': 'list', 'post': 'create'}), name='transactions-list'),
     path('bank/transactions/<uuid:pk>/', AdvancedBankTransactionViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}), name='transactions-detail'),
+    path('bank/transactions/<uuid:pk>/reconcile/', AdvancedBankTransactionViewSet.as_view({'post': 'reconcile'}), name='transactions-reconcile'),
+    path('bank/transactions/<uuid:pk>/ml-suggestions/', AdvancedBankTransactionViewSet.as_view({'get': 'ml_suggestions'}), name='transactions-ml-suggestions'),
     path('bank/uploads/', FileUploadViewSet.as_view({'get': 'list'}), name='uploads-list'),
     path('bank/uploads/<uuid:pk>/', FileUploadViewSet.as_view({'get': 'retrieve'}), name='uploads-detail'),
 
